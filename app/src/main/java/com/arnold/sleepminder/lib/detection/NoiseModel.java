@@ -101,7 +101,7 @@ public class NoiseModel {
         return VAR.get(VAR.size() - 1);
     }
 
-    public void calculateFrame () {
+    public void calFrame() {
         if (getLastRLH() > 10) {
             if (getNormalizedRLH() > 2) {
                 snore += 1;

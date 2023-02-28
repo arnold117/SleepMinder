@@ -1,7 +1,5 @@
 package com.arnold.sleepminder.lib.detection;
 
-import android.util.Log;
-
 public class FeatureExtractor {
     private NoiseModel noiseModel;
     private float[] lowFreq;
@@ -79,6 +77,6 @@ public class FeatureExtractor {
         noiseModel.addRMS(calRMS(buffer));
         noiseModel.addVAR(calVAR(buffer));
 
-        noiseModel.calculateFrame();
+        noiseModel.calFrame();
     }
 }
