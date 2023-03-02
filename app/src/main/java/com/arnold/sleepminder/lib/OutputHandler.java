@@ -1,4 +1,5 @@
 package com.arnold.sleepminder.lib;
 
-public class OutputHandler {
+public interface OutputHandler {
+    void saveData(String data, String identifier);
 }
