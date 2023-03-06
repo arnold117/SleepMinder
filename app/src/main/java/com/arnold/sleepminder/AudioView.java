@@ -184,4 +184,8 @@ public class AudioView extends View implements DebugView {
         }
         this.i += 1;
     }
+
+    public void stop() {
+        recorder.stopRecording();
+    }
 }
