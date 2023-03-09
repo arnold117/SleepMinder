@@ -18,14 +18,12 @@ import com.arnold.sleepminder.lib.charting.charts.CombinedChart;
 import com.arnold.sleepminder.lib.charting.charts.HorizontalBarChart;
 import com.arnold.sleepminder.lib.charting.charts.PieChart;
 import com.arnold.sleepminder.lib.charting.components.Legend;
-import com.arnold.sleepminder.lib.charting.components.XAxis;
 import com.arnold.sleepminder.lib.charting.data.BarData;
 import com.arnold.sleepminder.lib.charting.data.BarDataSet;
 import com.arnold.sleepminder.lib.charting.data.BarEntry;
 import com.arnold.sleepminder.lib.charting.data.Entry;
 import com.arnold.sleepminder.lib.charting.data.PieData;
 import com.arnold.sleepminder.lib.charting.data.PieDataSet;
-import com.arnold.sleepminder.lib.charting.data.PieEntry;
 import com.arnold.sleepminder.lib.charting.utils.ColorTemplate;
 import com.arnold.sleepminder.storage.FileHandler;
 
@@ -57,7 +55,7 @@ public class SingleNight extends AppCompatActivity {
 
         CombinedChart chart = (CombinedChart) findViewById(R.id.chart);
 
-        ArrayList<PieEntry> lightEntries = new ArrayList<PieEntry>();
+        ArrayList<Entry> lightEntries = new ArrayList<Entry>();
         ArrayList<BarEntry> sleepStageEntries = new ArrayList<BarEntry>();
         ArrayList<BarEntry> sleepEventEntries = new ArrayList<BarEntry>();
 
@@ -89,16 +87,20 @@ public class SingleNight extends AppCompatActivity {
     private void setupSleepStagesChart(int deep, int light) {
         PieChart chart = findViewById(R.id.sleepStages);
 
-        ArrayList<PieEntry> pieComp1 = new ArrayList<PieEntry>();
-        PieEntry cle1 = new PieEntry(deep, "Deep");
+        ArrayList<Entry> pieComp1 = new ArrayList<Entry>();
+        Entry cle1 = new Entry(deep, 0);
         pieComp1.add(cle1);
-        PieEntry cle2 = new PieEntry(light, "Light");
+        Entry cle2 = new Entry(light, 1);
         pieComp1.add(cle2);
 
         PieDataSet pieDataSet = new PieDataSet(pieComp1, "Sleep Stages");
         pieDataSet.setColors(ColorTemplate.PASTEL_COLORS);
 
-        PieData pieData = new PieData(pieDataSet);
+        ArrayList<String> xVals = new ArrayList<String>();
+        xVals.add("Deep");
+        xVals.add("Light");
+
+        PieData pieData = new PieData(xVals, pieDataSet);
         pieData.setValueTextSize(14);
         pieData.setValueTextColor(Color.WHITE);
         chart.setData(pieData);
@@ -107,7 +109,7 @@ public class SingleNight extends AppCompatActivity {
         pieLegend.setEnabled(false);
 
         chart.setUsePercentValues(true);
-        chart.getDescription().setText("Sleep Stages");
+        chart.setDescription("Sleep Stages");
         chart.setHardwareAccelerationEnabled(true);
         chart.setBackgroundColor(Color.parseColor("#52B19D"));
 
@@ -137,7 +139,7 @@ public class SingleNight extends AppCompatActivity {
         xVals.add("Movement");
         xVals.add("Snore");
 
-        BarData barData = new BarData(barDataSet);
+        BarData barData = new BarData(xVals, barDataSet);
         barData.setValueTextSize(14);
         barData.setValueTextColor(Color.WHITE);
         barChart.setData(barData);
@@ -149,7 +151,7 @@ public class SingleNight extends AppCompatActivity {
         barChart.getAxisRight().setEnabled(false);
         barChart.setGridBackgroundColor(Color.parseColor("#52B19D"));
 
-        barChart.getDescription().setText("Sleep Events");
+        barChart.setDescription("Sleep Events");
         barChart.setHardwareAccelerationEnabled(true);
         barChart.setDrawBorders(false);
 
@@ -159,18 +161,23 @@ public class SingleNight extends AppCompatActivity {
     private void setupLightChart(int night, int dawn, int day) {
         PieChart pieChart = findViewById(R.id.lightQuality);
 
-        ArrayList<PieEntry> pieComp1 = new ArrayList<PieEntry>();
-        PieEntry cle1 = new PieEntry(night, "Night");
+        ArrayList<Entry> pieComp1 = new ArrayList<Entry>();
+        Entry cle1 = new Entry(night, 0);
         pieComp1.add(cle1);
-        PieEntry cle2 = new PieEntry(dawn, "Dawn");
+        Entry cle2 = new Entry(dawn, 1);
         pieComp1.add(cle2);
-        PieEntry cle3 = new PieEntry(day, "Day");
+        Entry cle3 = new Entry(day, 2);
         pieComp1.add(cle3);
 
         PieDataSet pieDataSet = new PieDataSet(pieComp1, "Light Quality");
         pieDataSet.setColors(ColorTemplate.PASTEL_COLORS);
 
-        PieData pieData = new PieData(pieDataSet);
+        ArrayList<String> xVals = new ArrayList<String>();
+        xVals.add("Night");
+        xVals.add("Dawn");
+        xVals.add("Day");
+
+        PieData pieData = new PieData(xVals, pieDataSet);
         pieData.setValueTextSize(14);
         pieData.setValueTextColor(Color.WHITE);
         pieChart.setData(pieData);
@@ -179,7 +186,7 @@ public class SingleNight extends AppCompatActivity {
         pieLegend.setEnabled(false);
 
         pieChart.setUsePercentValues(true);
-        pieChart.getDescription().setText("Light Quality");
+        pieChart.setDescription("Light Quality");
         pieChart.setHardwareAccelerationEnabled(true);
 
         pieChart.setHoleColor(Color.parseColor("#52B09C"));
