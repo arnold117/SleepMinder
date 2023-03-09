@@ -14,17 +14,17 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.arnold.sleepminder.R;
-import com.arnold.sleepminder.lib.charting.charts.CombinedChart;
-import com.arnold.sleepminder.lib.charting.charts.HorizontalBarChart;
-import com.arnold.sleepminder.lib.charting.charts.PieChart;
-import com.arnold.sleepminder.lib.charting.components.Legend;
-import com.arnold.sleepminder.lib.charting.data.BarData;
-import com.arnold.sleepminder.lib.charting.data.BarDataSet;
-import com.arnold.sleepminder.lib.charting.data.BarEntry;
-import com.arnold.sleepminder.lib.charting.data.Entry;
-import com.arnold.sleepminder.lib.charting.data.PieData;
-import com.arnold.sleepminder.lib.charting.data.PieDataSet;
-import com.arnold.sleepminder.lib.charting.utils.ColorTemplate;
+import com.github.mikephil.charting.charts.CombinedChart;
+import com.github.mikephil.charting.charts.HorizontalBarChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.arnold.sleepminder.storage.FileHandler;
 
 import java.io.File;

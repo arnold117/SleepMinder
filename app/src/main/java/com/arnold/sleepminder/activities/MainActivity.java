@@ -1,8 +1,5 @@
 package com.arnold.sleepminder.activities;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,13 +11,15 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.arnold.sleepminder.Hooks;
 import com.arnold.sleepminder.MyApplication;
 import com.arnold.sleepminder.R;
 import com.arnold.sleepminder.RecordingService;
 import com.arnold.sleepminder.activities.support.AudioTester;
 import com.arnold.sleepminder.activities.support.NightListAdapter;
-import com.arnold.sleepminder.lib.charting.charts.HorizontalBarChart;
 import com.arnold.sleepminder.storage.FileHandler;
 import com.google.android.material.snackbar.Snackbar;
 
