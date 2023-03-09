@@ -3,6 +3,7 @@ package com.arnold.sleepminder.lib.charting.data;
 
 import com.arnold.sleepminder.lib.charting.interfaces.datasets.IBubbleDataSet;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BubbleData extends BarLineScatterCandleBubbleData<IBubbleDataSet> {
@@ -11,14 +12,35 @@ public class BubbleData extends BarLineScatterCandleBubbleData<IBubbleDataSet> {
         super();
     }
 
-    public BubbleData(IBubbleDataSet... dataSets) {
-        super(dataSets);
+    public BubbleData(List<String> xVals) {
+        super(xVals);
     }
 
-    public BubbleData(List<IBubbleDataSet> dataSets) {
-        super(dataSets);
+    public BubbleData(String[] xVals) {
+        super(xVals);
     }
 
+    public BubbleData(List<String> xVals, List<IBubbleDataSet> dataSets) {
+        super(xVals, dataSets);
+    }
+
+    public BubbleData(String[] xVals, List<IBubbleDataSet> dataSets) {
+        super(xVals, dataSets);
+    }
+
+    public BubbleData(List<String> xVals, IBubbleDataSet dataSet) {
+        super(xVals, toList(dataSet));
+    }
+
+    public BubbleData(String[] xVals, IBubbleDataSet dataSet) {
+        super(xVals, toList(dataSet));
+    }
+
+    private static List<IBubbleDataSet> toList(IBubbleDataSet dataSet) {
+        List<IBubbleDataSet> sets = new ArrayList<IBubbleDataSet>();
+        sets.add(dataSet);
+        return sets;
+    }
 
     /**
      * Sets the width of the circle that surrounds the bubble when highlighted

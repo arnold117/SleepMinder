@@ -4,14 +4,11 @@ import android.graphics.Canvas;
 
 import com.arnold.sleepminder.lib.charting.animation.ChartAnimator;
 import com.arnold.sleepminder.lib.charting.highlight.Highlight;
-import com.arnold.sleepminder.lib.charting.charts.Chart;
+import com.arnold.sleepminder.lib.charting.interfaces.dataprovider.BarLineScatterCandleBubbleDataProvider;
 import com.arnold.sleepminder.lib.charting.charts.CombinedChart;
 import com.arnold.sleepminder.lib.charting.charts.CombinedChart.DrawOrder;
-import com.arnold.sleepminder.lib.charting.data.ChartData;
-import com.arnold.sleepminder.lib.charting.data.CombinedData;
 import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,27 +20,25 @@ public class CombinedChartRenderer extends DataRenderer {
     /**
      * all rederers for the different kinds of data this combined-renderer can draw
      */
-    protected List<DataRenderer> mRenderers = new ArrayList<DataRenderer>(5);
-
-    protected WeakReference<Chart> mChart;
+    protected List<DataRenderer> mRenderers;
 
     public CombinedChartRenderer(CombinedChart chart, ChartAnimator animator, ViewPortHandler viewPortHandler) {
         super(animator, viewPortHandler);
-        mChart = new WeakReference<Chart>(chart);
-        createRenderers();
+
+        createRenderers(chart, animator, viewPortHandler);
     }
 
     /**
      * Creates the renderers needed for this combined-renderer in the required order. Also takes the DrawOrder into
      * consideration.
+     *
+     * @param chart
+     * @param animator
+     * @param viewPortHandler
      */
-    public void createRenderers() {
+    protected void createRenderers(CombinedChart chart, ChartAnimator animator, ViewPortHandler viewPortHandler) {
 
-        mRenderers.clear();
-
-        CombinedChart chart = (CombinedChart)mChart.get();
-        if (chart == null)
-            return;
+        mRenderers = new ArrayList<DataRenderer>();
 
         DrawOrder[] orders = chart.getDrawOrder();
 
@@ -52,23 +47,23 @@ public class CombinedChartRenderer extends DataRenderer {
             switch (order) {
                 case BAR:
                     if (chart.getBarData() != null)
-                        mRenderers.add(new BarChartRenderer(chart, mAnimator, mViewPortHandler));
+                        mRenderers.add(new BarChartRenderer(chart, animator, viewPortHandler));
                     break;
                 case BUBBLE:
                     if (chart.getBubbleData() != null)
-                        mRenderers.add(new BubbleChartRenderer(chart, mAnimator, mViewPortHandler));
+                        mRenderers.add(new BubbleChartRenderer(chart, animator, viewPortHandler));
                     break;
                 case LINE:
                     if (chart.getLineData() != null)
-                        mRenderers.add(new LineChartRenderer(chart, mAnimator, mViewPortHandler));
+                        mRenderers.add(new LineChartRenderer(chart, animator, viewPortHandler));
                     break;
                 case CANDLE:
                     if (chart.getCandleData() != null)
-                        mRenderers.add(new CandleStickChartRenderer(chart, mAnimator, mViewPortHandler));
+                        mRenderers.add(new CandleStickChartRenderer(chart, animator, viewPortHandler));
                     break;
                 case SCATTER:
                     if (chart.getScatterData() != null)
-                        mRenderers.add(new ScatterChartRenderer(chart, mAnimator, mViewPortHandler));
+                        mRenderers.add(new ScatterChartRenderer(chart, animator, viewPortHandler));
                     break;
             }
         }
@@ -102,40 +97,16 @@ public class CombinedChartRenderer extends DataRenderer {
             renderer.drawExtras(c);
     }
 
-    protected List<Highlight> mHighlightBuffer = new ArrayList<Highlight>();
-
     @Override
     public void drawHighlighted(Canvas c, Highlight[] indices) {
+        for (DataRenderer renderer : mRenderers)
+            renderer.drawHighlighted(c, indices);
+    }
 
-        Chart chart = mChart.get();
-        if (chart == null) return;
-
-        for (DataRenderer renderer : mRenderers) {
-            ChartData data = null;
-
-            if (renderer instanceof BarChartRenderer)
-                data = ((BarChartRenderer)renderer).mChart.getBarData();
-            else if (renderer instanceof LineChartRenderer)
-                data = ((LineChartRenderer)renderer).mChart.getLineData();
-            else if (renderer instanceof CandleStickChartRenderer)
-                data = ((CandleStickChartRenderer)renderer).mChart.getCandleData();
-            else if (renderer instanceof ScatterChartRenderer)
-                data = ((ScatterChartRenderer)renderer).mChart.getScatterData();
-            else if (renderer instanceof BubbleChartRenderer)
-                data = ((BubbleChartRenderer)renderer).mChart.getBubbleData();
-
-            int dataIndex = data == null ? -1
-                    : ((CombinedData)chart.getData()).getAllData().indexOf(data);
-
-            mHighlightBuffer.clear();
-
-            for (Highlight h : indices) {
-                if (h.getDataIndex() == dataIndex || h.getDataIndex() == -1)
-                    mHighlightBuffer.add(h);
-            }
-
-            renderer.drawHighlighted(c, mHighlightBuffer.toArray(new Highlight[mHighlightBuffer.size()]));
-        }
+    @Override
+    public void calcXBounds(BarLineScatterCandleBubbleDataProvider chart, int xAxisModulus) {
+        for (DataRenderer renderer : mRenderers)
+            renderer.calcXBounds(chart, xAxisModulus);
     }
 
     /**

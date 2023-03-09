@@ -1,11 +1,9 @@
 
 package com.arnold.sleepminder.lib.charting.data;
 
-import android.util.Log;
-
-import com.arnold.sleepminder.lib.charting.highlight.Highlight;
 import com.arnold.sleepminder.lib.charting.interfaces.datasets.IPieDataSet;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,8 +20,26 @@ public class PieData extends ChartData<IPieDataSet> {
         super();
     }
 
-    public PieData(IPieDataSet dataSet) {
-        super(dataSet);
+    public PieData(List<String> xVals) {
+        super(xVals);
+    }
+
+    public PieData(String[] xVals) {
+        super(xVals);
+    }
+
+    public PieData(List<String> xVals, IPieDataSet dataSet) {
+        super(xVals, toList(dataSet));
+    }
+
+    public PieData(String[] xVals, IPieDataSet dataSet) {
+        super(xVals, toList(dataSet));
+    }
+
+    private static List<IPieDataSet> toList(IPieDataSet dataSet) {
+        List<IPieDataSet> sets = new ArrayList<IPieDataSet>();
+        sets.add(dataSet);
+        return sets;
     }
 
     /**
@@ -34,7 +50,7 @@ public class PieData extends ChartData<IPieDataSet> {
     public void setDataSet(IPieDataSet dataSet) {
         mDataSets.clear();
         mDataSets.add(dataSet);
-        notifyDataChanged();
+        init();
     }
 
     /**
@@ -45,18 +61,6 @@ public class PieData extends ChartData<IPieDataSet> {
      */
     public IPieDataSet getDataSet() {
         return mDataSets.get(0);
-    }
-
-    @Override
-    public List<IPieDataSet> getDataSets() {
-        List<IPieDataSet> dataSets = super.getDataSets();
-
-        if (dataSets.size() < 1) {
-            Log.e("MPAndroidChart",
-                    "Found multiple data sets while pie chart only allows one");
-        }
-
-        return dataSets;
     }
 
     /**
@@ -76,11 +80,6 @@ public class PieData extends ChartData<IPieDataSet> {
                 : null : label.equals(mDataSets.get(0).getLabel()) ? mDataSets.get(0) : null;
     }
 
-    @Override
-    public Entry getEntryForHighlight(Highlight highlight) {
-        return getDataSet().getEntryForIndex((int) highlight.getX());
-    }
-
     /**
      * Returns the sum of all values in this PieData object.
      *
@@ -91,7 +90,7 @@ public class PieData extends ChartData<IPieDataSet> {
         float sum = 0;
 
         for (int i = 0; i < getDataSet().getEntryCount(); i++)
-            sum += getDataSet().getEntryForIndex(i).getY();
+            sum += getDataSet().getEntryForIndex(i).getVal();
 
 
         return sum;

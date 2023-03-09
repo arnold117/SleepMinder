@@ -1,10 +1,9 @@
 
 package com.arnold.sleepminder.lib.charting.data;
 
-import com.arnold.sleepminder.lib.charting.highlight.Highlight;
 import com.arnold.sleepminder.lib.charting.interfaces.datasets.IRadarDataSet;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,44 +13,37 @@ import java.util.List;
  */
 public class RadarData extends ChartData<IRadarDataSet> {
 
-    private List<String> mLabels;
-
     public RadarData() {
         super();
     }
 
-    public RadarData(List<IRadarDataSet> dataSets) {
-        super(dataSets);
+    public RadarData(List<String> xVals) {
+        super(xVals);
     }
 
-    public RadarData(IRadarDataSet... dataSets) {
-        super(dataSets);
+    public RadarData(String[] xVals) {
+        super(xVals);
     }
 
-    /**
-     * Sets the labels that should be drawn around the RadarChart at the end of each web line.
-     *
-     * @param labels
-     */
-    public void setLabels(List<String> labels) {
-        this.mLabels = labels;
+    public RadarData(List<String> xVals, List<IRadarDataSet> dataSets) {
+        super(xVals, dataSets);
     }
 
-    /**
-     * Sets the labels that should be drawn around the RadarChart at the end of each web line.
-     *
-     * @param labels
-     */
-    public void setLabels(String... labels) {
-        this.mLabels = Arrays.asList(labels);
+    public RadarData(String[] xVals, List<IRadarDataSet> dataSets) {
+        super(xVals, dataSets);
     }
 
-    public List<String> getLabels() {
-        return mLabels;
+    public RadarData(List<String> xVals, IRadarDataSet dataSet) {
+        super(xVals, toList(dataSet));
     }
 
-    @Override
-    public Entry getEntryForHighlight(Highlight highlight) {
-        return getDataSetByIndex(highlight.getDataSetIndex()).getEntryForIndex((int) highlight.getX());
+    public RadarData(String[] xVals, IRadarDataSet dataSet) {
+        super(xVals, toList(dataSet));
+    }
+
+    private static List<IRadarDataSet> toList(IRadarDataSet dataSet) {
+        List<IRadarDataSet> sets = new ArrayList<IRadarDataSet>();
+        sets.add(dataSet);
+        return sets;
     }
 }

@@ -2,15 +2,13 @@ package com.arnold.sleepminder.lib.charting.data;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Typeface;
 
-import com.arnold.sleepminder.lib.charting.components.Legend;
 import com.arnold.sleepminder.lib.charting.components.YAxis;
-import com.arnold.sleepminder.lib.charting.formatter.IValueFormatter;
+import com.arnold.sleepminder.lib.charting.formatter.DefaultValueFormatter;
+import com.arnold.sleepminder.lib.charting.formatter.ValueFormatter;
 import com.arnold.sleepminder.lib.charting.interfaces.datasets.IDataSet;
 import com.arnold.sleepminder.lib.charting.utils.ColorTemplate;
-import com.arnold.sleepminder.lib.charting.utils.MPPointF;
 import com.arnold.sleepminder.lib.charting.utils.Utils;
 
 import java.util.ArrayList;
@@ -51,32 +49,17 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     /**
      * custom formatter that is used instead of the auto-formatter if set
      */
-    protected transient IValueFormatter mValueFormatter;
+    protected transient ValueFormatter mValueFormatter;
 
     /**
      * the typeface used for the value text
      */
     protected Typeface mValueTypeface;
 
-    private Legend.LegendForm mForm = Legend.LegendForm.DEFAULT;
-    private float mFormSize = Float.NaN;
-    private float mFormLineWidth = Float.NaN;
-    private DashPathEffect mFormLineDashEffect = null;
-
     /**
      * if true, y-values are drawn on the chart
      */
     protected boolean mDrawValues = true;
-
-    /**
-     * if true, y-icons are drawn on the chart
-     */
-    protected boolean mDrawIcons = true;
-
-    /**
-     * the offset for drawing icons (in dp)
-     */
-    protected MPPointF mIconsOffset = new MPPointF();
 
     /**
      * the size of the value-text labels
@@ -114,7 +97,7 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
      * Use this method to tell the data set that the underlying data has changed.
      */
     public void notifyDataSetChanged() {
-        calcMinMax();
+        calcMinMax(0, getEntryCount() - 1);
     }
 
 
@@ -127,9 +110,7 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
         return mColors;
     }
 
-    public List<Integer> getValueColors() {
-        return mValueColors;
-    }
+    public List<Integer> getValueColors() { return mValueColors; }
 
     @Override
     public int getColor() {
@@ -167,7 +148,7 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
      *
      * @param colors
      */
-    public void setColors(int... colors) {
+    public void setColors(int[] colors) {
         this.mColors = ColorTemplate.createColors(colors);
     }
 
@@ -183,15 +164,13 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
      */
     public void setColors(int[] colors, Context c) {
 
-        if (mColors == null) {
-            mColors = new ArrayList<>();
-        }
-
-        mColors.clear();
+        List<Integer> clrs = new ArrayList<Integer>();
 
         for (int color : colors) {
-            mColors.add(c.getResources().getColor(color));
+            clrs.add(c.getResources().getColor(color));
         }
+
+        mColors = clrs;
     }
 
     /**
@@ -243,15 +222,10 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
      * Resets all colors of this DataSet and recreates the colors array.
      */
     public void resetColors() {
-        if (mColors == null) {
-            mColors = new ArrayList<Integer>();
-        }
-        mColors.clear();
+        mColors = new ArrayList<Integer>();
     }
 
-    /**
-     * ###### ###### OTHER STYLING RELATED METHODS ##### ######
-     */
+    /** ###### ###### OTHER STYLING RELATED METHODS ##### ###### */
 
     @Override
     public void setLabel(String label) {
@@ -274,7 +248,7 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     }
 
     @Override
-    public void setValueFormatter(IValueFormatter f) {
+    public void setValueFormatter(ValueFormatter f) {
 
         if (f == null)
             return;
@@ -283,15 +257,10 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     }
 
     @Override
-    public IValueFormatter getValueFormatter() {
-        if (needsFormatter())
-            return Utils.getDefaultValueFormatter();
+    public ValueFormatter getValueFormatter() {
+        if (mValueFormatter == null)
+            return new DefaultValueFormatter(1);
         return mValueFormatter;
-    }
-
-    @Override
-    public boolean needsFormatter() {
-        return mValueFormatter == null;
     }
 
     @Override
@@ -335,42 +304,6 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
         return mValueTextSize;
     }
 
-    public void setForm(Legend.LegendForm form) {
-        mForm = form;
-    }
-
-    @Override
-    public Legend.LegendForm getForm() {
-        return mForm;
-    }
-
-    public void setFormSize(float formSize) {
-        mFormSize = formSize;
-    }
-
-    @Override
-    public float getFormSize() {
-        return mFormSize;
-    }
-
-    public void setFormLineWidth(float formLineWidth) {
-        mFormLineWidth = formLineWidth;
-    }
-
-    @Override
-    public float getFormLineWidth() {
-        return mFormLineWidth;
-    }
-
-    public void setFormLineDashEffect(DashPathEffect dashPathEffect) {
-        mFormLineDashEffect = dashPathEffect;
-    }
-
-    @Override
-    public DashPathEffect getFormLineDashEffect() {
-        return mFormLineDashEffect;
-    }
-
     @Override
     public void setDrawValues(boolean enabled) {
         this.mDrawValues = enabled;
@@ -379,28 +312,6 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     @Override
     public boolean isDrawValuesEnabled() {
         return mDrawValues;
-    }
-
-    @Override
-    public void setDrawIcons(boolean enabled) {
-        mDrawIcons = enabled;
-    }
-
-    @Override
-    public boolean isDrawIconsEnabled() {
-        return mDrawIcons;
-    }
-
-    @Override
-    public void setIconsOffset(MPPointF offsetDp) {
-
-        mIconsOffset.x = offsetDp.x;
-        mIconsOffset.y = offsetDp.y;
-    }
-
-    @Override
-    public MPPointF getIconsOffset() {
-        return mIconsOffset;
     }
 
     @Override
@@ -424,15 +335,13 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     }
 
 
-    /**
-     * ###### ###### DATA RELATED METHODS ###### ######
-     */
+    /** ###### ###### DATA RELATED METHODS ###### ###### */
 
     @Override
     public int getIndexInEntries(int xIndex) {
 
         for (int i = 0; i < getEntryCount(); i++) {
-            if (xIndex == getEntryForIndex(i).getX())
+            if (xIndex == getEntryForIndex(i).getXIndex())
                 return i;
         }
 
@@ -442,65 +351,32 @@ public abstract class BaseDataSet<T extends Entry> implements IDataSet<T> {
     @Override
     public boolean removeFirst() {
 
-        if (getEntryCount() > 0) {
-
-            T entry = getEntryForIndex(0);
-            return removeEntry(entry);
-        } else
-            return false;
+        T entry = getEntryForIndex(0);
+        return removeEntry(entry);
     }
 
     @Override
     public boolean removeLast() {
 
-        if (getEntryCount() > 0) {
-
-            T e = getEntryForIndex(getEntryCount() - 1);
-            return removeEntry(e);
-        } else
-            return false;
+        T entry = getEntryForIndex(getEntryCount() - 1);
+        return removeEntry(entry);
     }
 
     @Override
-    public boolean removeEntryByXValue(float xValue) {
+    public boolean removeEntry(int xIndex) {
 
-        T e = getEntryForXValue(xValue, Float.NaN);
-        return removeEntry(e);
-    }
-
-    @Override
-    public boolean removeEntry(int index) {
-
-        T e = getEntryForIndex(index);
+        T e = getEntryForXIndex(xIndex);
         return removeEntry(e);
     }
 
     @Override
     public boolean contains(T e) {
 
-        for (int i = 0; i < getEntryCount(); i++) {
-            if (getEntryForIndex(i).equals(e))
+        for(int i = 0; i < getEntryCount(); i++) {
+            if(getEntryForIndex(i).equals(e))
                 return true;
         }
 
         return false;
-    }
-
-    protected void copy(BaseDataSet baseDataSet) {
-        baseDataSet.mAxisDependency = mAxisDependency;
-        baseDataSet.mColors = mColors;
-        baseDataSet.mDrawIcons = mDrawIcons;
-        baseDataSet.mDrawValues = mDrawValues;
-        baseDataSet.mForm = mForm;
-        baseDataSet.mFormLineDashEffect = mFormLineDashEffect;
-        baseDataSet.mFormLineWidth = mFormLineWidth;
-        baseDataSet.mFormSize = mFormSize;
-        baseDataSet.mHighlightEnabled = mHighlightEnabled;
-        baseDataSet.mIconsOffset = mIconsOffset;
-        baseDataSet.mValueColors = mValueColors;
-        baseDataSet.mValueFormatter = mValueFormatter;
-        baseDataSet.mValueColors = mValueColors;
-        baseDataSet.mValueTextSize = mValueTextSize;
-        baseDataSet.mVisible = mVisible;
     }
 }

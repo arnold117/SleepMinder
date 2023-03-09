@@ -2,10 +2,10 @@
 package com.arnold.sleepminder.lib.charting.renderer;
 
 import android.graphics.Canvas;
+import android.graphics.PointF;
 
 import com.arnold.sleepminder.lib.charting.components.XAxis;
 import com.arnold.sleepminder.lib.charting.charts.RadarChart;
-import com.arnold.sleepminder.lib.charting.utils.MPPointF;
 import com.arnold.sleepminder.lib.charting.utils.Utils;
 import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
 
@@ -26,7 +26,7 @@ public class XAxisRendererRadarChart extends XAxisRenderer {
             return;
 
         final float labelRotationAngleDegrees = mXAxis.getLabelRotationAngle();
-        final MPPointF drawLabelAnchor = MPPointF.getInstance(0.5f, 0.25f);
+        final PointF drawLabelAnchor = new PointF(0.5f, 0.0f);
 
         mAxisLabelPaint.setTypeface(mXAxis.getTypeface());
         mAxisLabelPaint.setTextSize(mXAxis.getTextSize());
@@ -38,24 +38,20 @@ public class XAxisRendererRadarChart extends XAxisRenderer {
         // pixels
         float factor = mChart.getFactor();
 
-        MPPointF center = mChart.getCenterOffsets();
-        MPPointF pOut = MPPointF.getInstance(0,0);
-        for (int i = 0; i < mChart.getData().getMaxEntryCountSet().getEntryCount(); i++) {
+        PointF center = mChart.getCenterOffsets();
 
-            String label = mXAxis.getValueFormatter().getFormattedValue(i, mXAxis);
+        int mod = mXAxis.mAxisLabelModulus;
+        for (int i = 0; i < mXAxis.getValues().size(); i += mod) {
+            String label = mXAxis.getValues().get(i);
 
             float angle = (sliceangle * i + mChart.getRotationAngle()) % 360f;
 
-            Utils.getPosition(center, mChart.getYRange() * factor
-                    + mXAxis.mLabelRotatedWidth / 2f, angle, pOut);
+            PointF p = Utils.getPosition(center, mChart.getYRange() * factor
+                    + mXAxis.mLabelRotatedWidth / 2f, angle);
 
-            drawLabel(c, label, pOut.x, pOut.y - mXAxis.mLabelRotatedHeight / 2.f,
+            drawLabel(c, label, i, p.x, p.y - mXAxis.mLabelRotatedHeight / 2.f,
                     drawLabelAnchor, labelRotationAngleDegrees);
         }
-
-        MPPointF.recycleInstance(center);
-        MPPointF.recycleInstance(pOut);
-        MPPointF.recycleInstance(drawLabelAnchor);
     }
 
 	/**

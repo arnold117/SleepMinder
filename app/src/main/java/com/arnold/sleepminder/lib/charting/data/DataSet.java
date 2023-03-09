@@ -15,162 +15,92 @@ import java.util.List;
 public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
 
     /**
-     * the entries that this DataSet represents / holds together
+     * the entries that this dataset represents / holds together
      */
-    protected List<T> mEntries;
+    protected List<T> mYVals = null;
 
     /**
-     * maximum y-value in the value array
+     * maximum y-value in the y-value array
      */
-    protected float mYMax = -Float.MAX_VALUE;
+    protected float mYMax = 0.0f;
 
     /**
-     * minimum y-value in the value array
+     * the minimum y-value in the y-value array
      */
-    protected float mYMin = Float.MAX_VALUE;
-
-    /**
-     * maximum x-value in the value array
-     */
-    protected float mXMax = -Float.MAX_VALUE;
-
-    /**
-     * minimum x-value in the value array
-     */
-    protected float mXMin = Float.MAX_VALUE;
+    protected float mYMin = 0.0f;
 
 
     /**
-     * Creates a new DataSet object with the given values (entries) it represents. Also, a
+     * Creates a new DataSet object with the given values it represents. Also, a
      * label that describes the DataSet can be specified. The label can also be
      * used to retrieve the DataSet from a ChartData object.
      *
-     * @param entries
+     * @param yVals
      * @param label
      */
-    public DataSet(List<T> entries, String label) {
+    public DataSet(List<T> yVals, String label) {
         super(label);
-        this.mEntries = entries;
+        this.mYVals = yVals;
 
-        if (mEntries == null)
-            mEntries = new ArrayList<T>();
+        if (mYVals == null)
+            mYVals = new ArrayList<T>();
 
-        calcMinMax();
+        calcMinMax(0, mYVals.size());
     }
 
     @Override
-    public void calcMinMax() {
+    public void calcMinMax(int start, int end) {
 
-        mYMax = -Float.MAX_VALUE;
+        if (mYVals == null)
+            return;
+
+        final int yValCount = mYVals.size();
+
+        if (yValCount == 0)
+            return;
+
+        int endValue;
+
+        if (end == 0 || end >= yValCount)
+            endValue = yValCount - 1;
+        else
+            endValue = end;
+
         mYMin = Float.MAX_VALUE;
-        mXMax = -Float.MAX_VALUE;
-        mXMin = Float.MAX_VALUE;
-
-        if (mEntries == null || mEntries.isEmpty())
-            return;
-
-        for (T e : mEntries) {
-            calcMinMax(e);
-        }
-    }
-
-    @Override
-    public void calcMinMaxY(float fromX, float toX) {
         mYMax = -Float.MAX_VALUE;
-        mYMin = Float.MAX_VALUE;
-        
-        if (mEntries == null || mEntries.isEmpty())
-            return;
 
-        int indexFrom = getEntryIndex(fromX, Float.NaN, Rounding.DOWN);
-        int indexTo = getEntryIndex(toX, Float.NaN, Rounding.UP);
+        for (int i = start; i <= endValue; i++) {
 
-        if (indexTo < indexFrom) return;
+            T e = mYVals.get(i);
 
-        for (int i = indexFrom; i <= indexTo; i++) {
+            if (e != null && !Float.isNaN(e.getVal())) {
 
-            // only recalculate y
-            calcMinMaxY(mEntries.get(i));
+                if (e.getVal() < mYMin)
+                    mYMin = e.getVal();
+
+                if (e.getVal() > mYMax)
+                    mYMax = e.getVal();
+            }
         }
-    }
 
-    /**
-     * Updates the min and max x and y value of this DataSet based on the given Entry.
-     *
-     * @param e
-     */
-    protected void calcMinMax(T e) {
-
-        if (e == null)
-            return;
-
-        calcMinMaxX(e);
-
-        calcMinMaxY(e);
-    }
-
-    protected void calcMinMaxX(T e) {
-
-        if (e.getX() < mXMin)
-            mXMin = e.getX();
-
-        if (e.getX() > mXMax)
-            mXMax = e.getX();
-    }
-
-    protected void calcMinMaxY(T e) {
-
-        if (e.getY() < mYMin)
-            mYMin = e.getY();
-
-        if (e.getY() > mYMax)
-            mYMax = e.getY();
+        if (mYMin == Float.MAX_VALUE) {
+            mYMin = 0.f;
+            mYMax = 0.f;
+        }
     }
 
     @Override
     public int getEntryCount() {
-        return mEntries.size();
+        return mYVals.size();
     }
 
     /**
-     * This method is deprecated.
-     * Use getEntries() instead.
+     * Returns the array of y-values that this DataSet represents.
      *
      * @return
      */
-    @Deprecated
-    public List<T> getValues() {
-        return mEntries;
-    }
-
-    /**
-     * Returns the array of entries that this DataSet represents.
-     *
-     * @return
-     */
-    public List<T> getEntries() {
-        return mEntries;
-    }
-
-    /**
-     * This method is deprecated.
-     * Use setEntries(...) instead.
-     *
-     * @param values
-     */
-    @Deprecated
-    public void setValues(List<T> values) {
-        setEntries(values);
-    }
-
-    /**
-     * Sets the array of entries that this DataSet represents, and calls notifyDataSetChanged()
-     *
-     * @return
-     */
-    public void setEntries(List<T> entries) {
-        mEntries = entries;
-        notifyDataSetChanged();
+    public List<T> getYVals() {
+        return mYVals;
     }
 
     /**
@@ -180,20 +110,12 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
      */
     public abstract DataSet<T> copy();
 
-    /**
-     *
-     * @param dataSet
-     */
-    protected void copy(DataSet dataSet) {
-        super.copy(dataSet);
-    }
-
     @Override
     public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(toSimpleString());
-        for (int i = 0; i < mEntries.size(); i++) {
-            buffer.append(mEntries.get(i).toString() + " ");
+        for (int i = 0; i < mYVals.size(); i++) {
+            buffer.append(mYVals.get(i).toString() + " ");
         }
         return buffer.toString();
     }
@@ -206,8 +128,7 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
      */
     public String toSimpleString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("DataSet, label: " + (getLabel() == null ? "" : getLabel()) + ", entries: " + mEntries.size() +
-                "\n");
+        buffer.append("DataSet, label: " + (getLabel() == null ? "" : getLabel()) + ", entries: " + mYVals.size() + "\n");
         return buffer.toString();
     }
 
@@ -222,38 +143,39 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
     }
 
     @Override
-    public float getXMin() {
-        return mXMin;
-    }
-
-    @Override
-    public float getXMax() {
-        return mXMax;
-    }
-
-    @Override
     public void addEntryOrdered(T e) {
 
         if (e == null)
             return;
 
-        if (mEntries == null) {
-            mEntries = new ArrayList<T>();
+        float val = e.getVal();
+
+        if (mYVals == null) {
+            mYVals = new ArrayList<T>();
         }
 
-        calcMinMax(e);
-
-        if (mEntries.size() > 0 && mEntries.get(mEntries.size() - 1).getX() > e.getX()) {
-            int closestIndex = getEntryIndex(e.getX(), e.getY(), Rounding.UP);
-            mEntries.add(closestIndex, e);
+        if (mYVals.size() == 0) {
+            mYMax = val;
+            mYMin = val;
         } else {
-            mEntries.add(e);
+            if (mYMax < val)
+                mYMax = val;
+            if (mYMin > val)
+                mYMin = val;
         }
+
+        if (mYVals.size() > 0 && mYVals.get(mYVals.size() - 1).getXIndex() > e.getXIndex()) {
+            int closestIndex = getEntryIndex(e.getXIndex(), Rounding.UP);
+            mYVals.add(closestIndex, e);
+            return;
+        }
+
+        mYVals.add(e);
     }
 
     @Override
     public void clear() {
-        mEntries.clear();
+        mYVals.clear();
         notifyDataSetChanged();
     }
 
@@ -263,15 +185,26 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
         if (e == null)
             return false;
 
-        List<T> values = getEntries();
-        if (values == null) {
-            values = new ArrayList<>();
+        float val = e.getVal();
+
+        List<T> yVals = getYVals();
+        if (yVals == null) {
+            yVals = new ArrayList<T>();
         }
 
-        calcMinMax(e);
+        if (yVals.size() == 0) {
+            mYMax = val;
+            mYMin = val;
+        } else {
+            if (mYMax < val)
+                mYMax = val;
+            if (mYMin > val)
+                mYMin = val;
+        }
 
         // add the entry
-        return values.add(e);
+        yVals.add(e);
+        return true;
     }
 
     @Override
@@ -280,14 +213,14 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
         if (e == null)
             return false;
 
-        if (mEntries == null)
+        if (mYVals == null)
             return false;
 
         // remove the entry
-        boolean removed = mEntries.remove(e);
+        boolean removed = mYVals.remove(e);
 
         if (removed) {
-            calcMinMax();
+            calcMinMax(0, mYVals.size());
         }
 
         return removed;
@@ -295,107 +228,63 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
 
     @Override
     public int getEntryIndex(Entry e) {
-        return mEntries.indexOf(e);
+        return mYVals.indexOf(e);
     }
 
     @Override
-    public T getEntryForXValue(float xValue, float closestToY, Rounding rounding) {
+    public T getEntryForXIndex(int xIndex, Rounding rounding) {
 
-        int index = getEntryIndex(xValue, closestToY, rounding);
+        int index = getEntryIndex(xIndex, rounding);
         if (index > -1)
-            return mEntries.get(index);
+            return mYVals.get(index);
         return null;
     }
 
     @Override
-    public T getEntryForXValue(float xValue, float closestToY) {
-        return getEntryForXValue(xValue, closestToY, Rounding.CLOSEST);
+    public T getEntryForXIndex(int xIndex) {
+        return getEntryForXIndex(xIndex, Rounding.CLOSEST);
     }
 
     @Override
     public T getEntryForIndex(int index) {
-        return mEntries.get(index);
+        return mYVals.get(index);
     }
 
     @Override
-    public int getEntryIndex(float xValue, float closestToY, Rounding rounding) {
-
-        if (mEntries == null || mEntries.isEmpty())
-            return -1;
+    public int getEntryIndex(int xIndex, Rounding rounding) {
 
         int low = 0;
-        int high = mEntries.size() - 1;
-        int closest = high;
+        int high = mYVals.size() - 1;
+        int closest = -1;
 
-        while (low < high) {
-            int m = (low + high) / 2;
+        while (low <= high) {
+            int m = (high + low) / 2;
 
-            final float d1 = mEntries.get(m).getX() - xValue,
-                    d2 = mEntries.get(m + 1).getX() - xValue,
-                    ad1 = Math.abs(d1), ad2 = Math.abs(d2);
+            if (xIndex == mYVals.get(m).getXIndex()) {
+                while (m > 0 && mYVals.get(m - 1).getXIndex() == xIndex)
+                    m--;
 
-            if (ad2 < ad1) {
-                // [m + 1] is closer to xValue
-                // Search in an higher place
-                low = m + 1;
-            } else if (ad1 < ad2) {
-                // [m] is closer to xValue
-                // Search in a lower place
-                high = m;
-            } else {
-                // We have multiple sequential x-value with same distance
-
-                if (d1 >= 0.0) {
-                    // Search in a lower place
-                    high = m;
-                } else if (d1 < 0.0) {
-                    // Search in an higher place
-                    low = m + 1;
-                }
+                return m;
             }
 
-            closest = high;
+            if (xIndex > mYVals.get(m).getXIndex())
+                low = m + 1;
+            else
+                high = m - 1;
+
+            closest = m;
         }
 
         if (closest != -1) {
-            float closestXValue = mEntries.get(closest).getX();
+            int closestXIndex = mYVals.get(closest).getXIndex();
             if (rounding == Rounding.UP) {
-                // If rounding up, and found x-value is lower than specified x, and we can go upper...
-                if (closestXValue < xValue && closest < mEntries.size() - 1) {
+                if (closestXIndex < xIndex && closest < mYVals.size() - 1) {
                     ++closest;
                 }
             } else if (rounding == Rounding.DOWN) {
-                // If rounding down, and found x-value is upper than specified x, and we can go lower...
-                if (closestXValue > xValue && closest > 0) {
+                if (closestXIndex > xIndex && closest > 0) {
                     --closest;
                 }
-            }
-
-            // Search by closest to y-value
-            if (!Float.isNaN(closestToY)) {
-                while (closest > 0 && mEntries.get(closest - 1).getX() == closestXValue)
-                    closest -= 1;
-
-                float closestYValue = mEntries.get(closest).getY();
-                int closestYIndex = closest;
-
-                while (true) {
-                    closest += 1;
-                    if (closest >= mEntries.size())
-                        break;
-
-                    final Entry value = mEntries.get(closest);
-
-                    if (value.getX() != closestXValue)
-                        break;
-
-                    if (Math.abs(value.getY() - closestToY) <= Math.abs(closestYValue - closestToY)) {
-                        closestYValue = closestToY;
-                        closestYIndex = closest;
-                    }
-                }
-
-                closest = closestYIndex;
             }
         }
 
@@ -403,41 +292,54 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
     }
 
     @Override
-    public List<T> getEntriesForXValue(float xValue) {
+    public float getYValForXIndex(int xIndex) {
+
+        Entry e = getEntryForXIndex(xIndex);
+
+        if (e != null && e.getXIndex() == xIndex)
+            return e.getVal();
+        else
+            return Float.NaN;
+    }
+
+    /**
+     * Returns all Entry objects at the given xIndex. INFORMATION: This method
+     * does calculations at runtime. Do not over-use in performance critical
+     * situations.
+     *
+     * @param xIndex
+     * @return
+     */
+    public List<T> getEntriesForXIndex(int xIndex) {
 
         List<T> entries = new ArrayList<T>();
 
         int low = 0;
-        int high = mEntries.size() - 1;
+        int high = mYVals.size() - 1;
 
         while (low <= high) {
             int m = (high + low) / 2;
-            T entry = mEntries.get(m);
+            T entry = mYVals.get(m);
 
-            // if we have a match
-            if (xValue == entry.getX()) {
-                while (m > 0 && mEntries.get(m - 1).getX() == xValue)
+            if (xIndex == entry.getXIndex()) {
+                while (m > 0 && mYVals.get(m - 1).getXIndex() == xIndex)
                     m--;
 
-                high = mEntries.size();
-
-                // loop over all "equal" entries
+                high = mYVals.size();
                 for (; m < high; m++) {
-                    entry = mEntries.get(m);
-                    if (entry.getX() == xValue) {
+                    entry = mYVals.get(m);
+                    if (entry.getXIndex() == xIndex) {
                         entries.add(entry);
                     } else {
                         break;
                     }
                 }
-
-                break;
-            } else {
-                if (xValue > entry.getX())
-                    low = m + 1;
-                else
-                    high = m - 1;
             }
+
+            if (xIndex > entry.getXIndex())
+                low = m + 1;
+            else
+                high = m - 1;
         }
 
         return entries;
@@ -445,7 +347,7 @@ public abstract class DataSet<T extends Entry> extends BaseDataSet<T> {
 
     /**
      * Determines how to round DataSet index values for
-     * {@link DataSet#getEntryIndex(float, float, Rounding)} DataSet.getEntryIndex()}
+     * {@link DataSet#getEntryIndex(int, Rounding)} DataSet.getEntryIndex()}
      * when an exact x-index is not found.
      */
     public enum Rounding {

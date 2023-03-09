@@ -10,7 +10,7 @@ import com.arnold.sleepminder.lib.charting.data.LineData;
 
 /**
  * Chart that draws lines, surfaces, circles, ...
- *
+ * 
  * @author Philipp Jahoda
  */
 public class LineChart extends BarLineChartBase<LineData> implements LineDataProvider {
@@ -35,6 +35,14 @@ public class LineChart extends BarLineChartBase<LineData> implements LineDataPro
     }
 
     @Override
+    protected void calcMinMax() {
+        super.calcMinMax();
+
+        if (mXAxis.mAxisRange == 0 && mData.getYValCount() > 0)
+            mXAxis.mAxisRange = 1;
+    }
+    
+    @Override
     public LineData getLineData() {
         return mData;
     }
@@ -42,7 +50,7 @@ public class LineChart extends BarLineChartBase<LineData> implements LineDataPro
     @Override
     protected void onDetachedFromWindow() {
         // releases the bitmap in the renderer to avoid oom error
-        if (mRenderer != null && mRenderer instanceof LineChartRenderer) {
+        if(mRenderer != null && mRenderer instanceof LineChartRenderer) {
             ((LineChartRenderer) mRenderer).releaseBitmap();
         }
         super.onDetachedFromWindow();

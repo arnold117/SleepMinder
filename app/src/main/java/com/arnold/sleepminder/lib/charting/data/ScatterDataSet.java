@@ -3,14 +3,6 @@ package com.arnold.sleepminder.lib.charting.data;
 
 import com.arnold.sleepminder.lib.charting.charts.ScatterChart;
 import com.arnold.sleepminder.lib.charting.interfaces.datasets.IScatterDataSet;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.ChevronDownShapeRenderer;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.ChevronUpShapeRenderer;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.CircleShapeRenderer;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.CrossShapeRenderer;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.IShapeRenderer;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.SquareShapeRenderer;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.TriangleShapeRenderer;
-import com.arnold.sleepminder.lib.charting.renderer.scatter.XShapeRenderer;
 import com.arnold.sleepminder.lib.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
@@ -24,9 +16,10 @@ public class ScatterDataSet extends LineScatterCandleRadarDataSet<Entry> impleme
     private float mShapeSize = 15f;
 
     /**
-     * Renderer responsible for rendering this DataSet, default: square
+     * the type of shape that is set to be drawn where the values are at,
+     * default ScatterShape.SQUARE
      */
-    protected IShapeRenderer mShapeRenderer = new SquareShapeRenderer();
+    private ScatterChart.ScatterShape mScatterShape = ScatterChart.ScatterShape.SQUARE;
 
     /**
      * The radius of the hole in the shape (applies to Square, Circle and Triangle)
@@ -41,27 +34,34 @@ public class ScatterDataSet extends LineScatterCandleRadarDataSet<Entry> impleme
      */
     private int mScatterShapeHoleColor = ColorTemplate.COLOR_NONE;
 
+    /**
+     * Custom path object the user can provide that is drawn where the values
+     * are at. This is used when ScatterShape.CUSTOM is set for a DataSet.
+     */
+    //private Path mCustomScatterPath = null;
     public ScatterDataSet(List<Entry> yVals, String label) {
         super(yVals, label);
     }
 
     @Override
     public DataSet<Entry> copy() {
-        List<Entry> entries = new ArrayList<Entry>();
-        for (int i = 0; i < mEntries.size(); i++) {
-            entries.add(mEntries.get(i).copy());
-        }
-        ScatterDataSet copied = new ScatterDataSet(entries, getLabel());
-        copy(copied);
-        return copied;
-    }
 
-    protected void copy(ScatterDataSet scatterDataSet) {
-        super.copy(scatterDataSet);
-        scatterDataSet.mShapeSize = mShapeSize;
-        scatterDataSet.mShapeRenderer = mShapeRenderer;
-        scatterDataSet.mScatterShapeHoleRadius = mScatterShapeHoleRadius;
-        scatterDataSet.mScatterShapeHoleColor = mScatterShapeHoleColor;
+        List<Entry> yVals = new ArrayList<Entry>();
+
+        for (int i = 0; i < mYVals.size(); i++) {
+            yVals.add(mYVals.get(i).copy());
+        }
+
+        ScatterDataSet copied = new ScatterDataSet(yVals, getLabel());
+        copied.mColors = mColors;
+        copied.mShapeSize = mShapeSize;
+        copied.mScatterShape = mScatterShape;
+        copied.mScatterShapeHoleRadius = mScatterShapeHoleRadius;
+        copied.mScatterShapeHoleColor = mScatterShapeHoleColor;
+        //copied.mCustomScatterPath = mCustomScatterPath;
+        copied.mHighLightColor = mHighLightColor;
+
+        return copied;
     }
 
     /**
@@ -80,28 +80,17 @@ public class ScatterDataSet extends LineScatterCandleRadarDataSet<Entry> impleme
     }
 
     /**
-     * Sets the ScatterShape this DataSet should be drawn with. This will search for an available IShapeRenderer and set this
-     * renderer for the DataSet.
+     * Sets the shape that is drawn on the position where the values are at.
      *
      * @param shape
      */
     public void setScatterShape(ScatterChart.ScatterShape shape) {
-        mShapeRenderer = getRendererForShape(shape);
-    }
-
-    /**
-     * Sets a new IShapeRenderer responsible for drawing this DataSet.
-     * This can also be used to set a custom IShapeRenderer aside from the default ones.
-     *
-     * @param shapeRenderer
-     */
-    public void setShapeRenderer(IShapeRenderer shapeRenderer) {
-        mShapeRenderer = shapeRenderer;
+        mScatterShape = shape;
     }
 
     @Override
-    public IShapeRenderer getShapeRenderer() {
-        return mShapeRenderer;
+    public ScatterChart.ScatterShape getScatterShape() {
+        return mScatterShape;
     }
 
     /**
@@ -131,27 +120,5 @@ public class ScatterDataSet extends LineScatterCandleRadarDataSet<Entry> impleme
     @Override
     public int getScatterShapeHoleColor() {
         return mScatterShapeHoleColor;
-    }
-
-    public static IShapeRenderer getRendererForShape(ScatterChart.ScatterShape shape) {
-
-        switch (shape) {
-            case SQUARE:
-                return new SquareShapeRenderer();
-            case CIRCLE:
-                return new CircleShapeRenderer();
-            case TRIANGLE:
-                return new TriangleShapeRenderer();
-            case CROSS:
-                return new CrossShapeRenderer();
-            case X:
-                return new XShapeRenderer();
-            case CHEVRON_UP:
-                return new ChevronUpShapeRenderer();
-            case CHEVRON_DOWN:
-                return new ChevronDownShapeRenderer();
-        }
-
-        return null;
     }
 }

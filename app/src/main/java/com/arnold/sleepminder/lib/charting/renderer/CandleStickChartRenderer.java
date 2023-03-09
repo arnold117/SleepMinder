@@ -3,7 +3,6 @@ package com.arnold.sleepminder.lib.charting.renderer;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 
 import com.arnold.sleepminder.lib.charting.animation.ChartAnimator;
 import com.arnold.sleepminder.lib.charting.highlight.Highlight;
@@ -12,8 +11,6 @@ import com.arnold.sleepminder.lib.charting.interfaces.datasets.ICandleDataSet;
 import com.arnold.sleepminder.lib.charting.data.CandleData;
 import com.arnold.sleepminder.lib.charting.data.CandleEntry;
 import com.arnold.sleepminder.lib.charting.utils.ColorTemplate;
-import com.arnold.sleepminder.lib.charting.utils.MPPointD;
-import com.arnold.sleepminder.lib.charting.utils.MPPointF;
 import com.arnold.sleepminder.lib.charting.utils.Transformer;
 import com.arnold.sleepminder.lib.charting.utils.Utils;
 import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
@@ -48,34 +45,38 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
 
         for (ICandleDataSet set : candleData.getDataSets()) {
 
-            if (set.isVisible())
+            if (set.isVisible() && set.getEntryCount() > 0)
                 drawDataSet(c, set);
         }
     }
 
-    @SuppressWarnings("ResourceAsColor")
     protected void drawDataSet(Canvas c, ICandleDataSet dataSet) {
 
         Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
 
+        float phaseX = mAnimator.getPhaseX();
         float phaseY = mAnimator.getPhaseY();
         float barSpace = dataSet.getBarSpace();
         boolean showCandleBar = dataSet.getShowCandleBar();
 
-        mXBounds.set(mChart, dataSet);
+        int minx = Math.max(mMinX, 0);
+        int maxx = Math.min(mMaxX + 1, dataSet.getEntryCount());
 
         mRenderPaint.setStrokeWidth(dataSet.getShadowWidth());
 
         // draw the body
-        for (int j = mXBounds.min; j <= mXBounds.range + mXBounds.min; j++) {
+        for (int j = minx,
+             count = (int) Math.ceil((maxx - minx) * phaseX + (float)minx);
+             j < count;
+             j++) {
 
             // get the entry
             CandleEntry e = dataSet.getEntryForIndex(j);
 
-            if (e == null)
-                continue;
+            final int xIndex = e.getXIndex();
 
-            final float xPos = e.getX();
+            if (xIndex < minx || xIndex >= maxx)
+                continue;
 
             final float open = e.getOpen();
             final float close = e.getClose();
@@ -85,10 +86,10 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
             if (showCandleBar) {
                 // calculate the shadow
 
-                mShadowBuffers[0] = xPos;
-                mShadowBuffers[2] = xPos;
-                mShadowBuffers[4] = xPos;
-                mShadowBuffers[6] = xPos;
+                mShadowBuffers[0] = xIndex;
+                mShadowBuffers[2] = xIndex;
+                mShadowBuffers[4] = xIndex;
+                mShadowBuffers[6] = xIndex;
 
                 if (open > close) {
                     mShadowBuffers[1] = high * phaseY;
@@ -148,9 +149,9 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
 
                 // calculate the body
 
-                mBodyBuffers[0] = xPos - 0.5f + barSpace;
+                mBodyBuffers[0] = xIndex - 0.5f + barSpace;
                 mBodyBuffers[1] = close * phaseY;
-                mBodyBuffers[2] = (xPos + 0.5f - barSpace);
+                mBodyBuffers[2] = (xIndex + 0.5f - barSpace);
                 mBodyBuffers[3] = open * phaseY;
 
                 trans.pointValuesToPixel(mBodyBuffers);
@@ -200,19 +201,19 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
                 }
             } else {
 
-                mRangeBuffers[0] = xPos;
+                mRangeBuffers[0] = xIndex;
                 mRangeBuffers[1] = high * phaseY;
-                mRangeBuffers[2] = xPos;
+                mRangeBuffers[2] = xIndex;
                 mRangeBuffers[3] = low * phaseY;
 
-                mOpenBuffers[0] = xPos - 0.5f + barSpace;
+                mOpenBuffers[0] = xIndex - 0.5f + barSpace;
                 mOpenBuffers[1] = open * phaseY;
-                mOpenBuffers[2] = xPos;
+                mOpenBuffers[2] = xIndex;
                 mOpenBuffers[3] = open * phaseY;
 
-                mCloseBuffers[0] = xPos + 0.5f - barSpace;
+                mCloseBuffers[0] = xIndex + 0.5f - barSpace;
                 mCloseBuffers[1] = close * phaseY;
-                mCloseBuffers[2] = xPos;
+                mCloseBuffers[2] = xIndex;
                 mCloseBuffers[3] = close * phaseY;
 
                 trans.pointValuesToPixel(mRangeBuffers);
@@ -248,6 +249,7 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
                         mCloseBuffers[0], mCloseBuffers[1],
                         mCloseBuffers[2], mCloseBuffers[3],
                         mRenderPaint);
+
             }
         }
     }
@@ -256,7 +258,8 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
     public void drawValues(Canvas c) {
 
         // if values are drawn
-        if (isDrawingValuesAllowed(mChart)) {
+        if (mChart.getCandleData().getYValCount() < mChart.getMaxVisibleCount()
+                * mViewPortHandler.getScaleX()) {
 
             List<ICandleDataSet> dataSets = mChart.getCandleData().getDataSets();
 
@@ -264,7 +267,7 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
 
                 ICandleDataSet dataSet = dataSets.get(i);
 
-                if (!shouldDrawValues(dataSet) || dataSet.getEntryCount() < 1)
+                if (!dataSet.isDrawValuesEnabled() || dataSet.getEntryCount() == 0)
                     continue;
 
                 // apply the text-styling defined by the DataSet
@@ -272,16 +275,13 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
 
                 Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
 
-                mXBounds.set(mChart, dataSet);
+                int minx = Math.max(mMinX, 0);
+                int maxx = Math.min(mMaxX + 1, dataSet.getEntryCount());
 
                 float[] positions = trans.generateTransformedValuesCandle(
-                        dataSet, mAnimator.getPhaseX(), mAnimator.getPhaseY(), mXBounds.min, mXBounds.max);
+                        dataSet, mAnimator.getPhaseX(), mAnimator.getPhaseY(), minx, maxx);
 
                 float yOffset = Utils.convertDpToPixel(5f);
-
-                MPPointF iconsOffset = MPPointF.getInstance(dataSet.getIconsOffset());
-                iconsOffset.x = Utils.convertDpToPixel(iconsOffset.x);
-                iconsOffset.y = Utils.convertDpToPixel(iconsOffset.y);
 
                 for (int j = 0; j < positions.length; j += 2) {
 
@@ -294,35 +294,10 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
                     if (!mViewPortHandler.isInBoundsLeft(x) || !mViewPortHandler.isInBoundsY(y))
                         continue;
 
-                    CandleEntry entry = dataSet.getEntryForIndex(j / 2 + mXBounds.min);
+                    CandleEntry entry = dataSet.getEntryForIndex(j / 2 + minx);
 
-                    if (dataSet.isDrawValuesEnabled()) {
-                        drawValue(c,
-                                dataSet.getValueFormatter(),
-                                entry.getHigh(),
-                                entry,
-                                i,
-                                x,
-                                y - yOffset,
-                                dataSet
-                                        .getValueTextColor(j / 2));
-                    }
-
-                    if (entry.getIcon() != null && dataSet.isDrawIconsEnabled()) {
-
-                        Drawable icon = entry.getIcon();
-
-                        Utils.drawImage(
-                                c,
-                                icon,
-                                (int)(x + iconsOffset.x),
-                                (int)(y + iconsOffset.y),
-                                icon.getIntrinsicWidth(),
-                                icon.getIntrinsicHeight());
-                    }
+                    drawValue(c, dataSet.getValueFormatter(), entry.getHigh(), entry, i, x, y - yOffset, dataSet.getValueTextColor(j / 2));
                 }
-
-                MPPointF.recycleInstance(iconsOffset);
             }
         }
     }
@@ -334,30 +309,39 @@ public class CandleStickChartRenderer extends LineScatterCandleRadarRenderer {
     @Override
     public void drawHighlighted(Canvas c, Highlight[] indices) {
 
-        CandleData candleData = mChart.getCandleData();
+        for (int i = 0; i < indices.length; i++) {
 
-        for (Highlight high : indices) {
+            int xIndex = indices[i].getXIndex(); // get the
+            // x-position
 
-            ICandleDataSet set = candleData.getDataSetByIndex(high.getDataSetIndex());
+            ICandleDataSet set = mChart.getCandleData().getDataSetByIndex(
+                    indices[i].getDataSetIndex());
 
             if (set == null || !set.isHighlightEnabled())
                 continue;
 
-            CandleEntry e = set.getEntryForXValue(high.getX(), high.getY());
+            CandleEntry e = set.getEntryForXIndex(xIndex);
 
-            if (!isInBoundsX(e, set))
+            if (e == null || e.getXIndex() != xIndex)
                 continue;
 
-            float lowValue = e.getLow() * mAnimator.getPhaseY();
-            float highValue = e.getHigh() * mAnimator.getPhaseY();
-            float y = (lowValue + highValue) / 2f;
+            float low = e.getLow() * mAnimator.getPhaseY();
+            float high = e.getHigh() * mAnimator.getPhaseY();
+            float y = (low + high) / 2f;
 
-            MPPointD pix = mChart.getTransformer(set.getAxisDependency()).getPixelForValues(e.getX(), y);
+            float min = mChart.getYChartMin();
+            float max = mChart.getYChartMax();
 
-            high.setDraw((float) pix.x, (float) pix.y);
+
+            float[] pts = new float[]{
+                    xIndex, y
+            };
+
+            mChart.getTransformer(set.getAxisDependency()).pointValuesToPixel(pts);
 
             // draw the lines
-            drawHighlightLines(c, (float) pix.x, (float) pix.y, set);
+            drawHighlightLines(c, pts, set);
         }
     }
+
 }

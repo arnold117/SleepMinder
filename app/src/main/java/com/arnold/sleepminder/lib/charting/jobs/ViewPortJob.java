@@ -3,7 +3,6 @@ package com.arnold.sleepminder.lib.charting.jobs;
 
 import android.view.View;
 
-import com.arnold.sleepminder.lib.charting.utils.ObjectPool;
 import com.arnold.sleepminder.lib.charting.utils.Transformer;
 import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
 
@@ -16,7 +15,7 @@ import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
  * 
  * @author Philipp Jahoda
  */
-public abstract class ViewPortJob extends ObjectPool.Poolable implements Runnable {
+public abstract class ViewPortJob implements Runnable {
 
     protected float[] pts = new float[2];
 
@@ -34,7 +33,6 @@ public abstract class ViewPortJob extends ObjectPool.Poolable implements Runnabl
         this.yValue = yValue;
         this.mTrans = trans;
         this.view = v;
-
     }
 
     public float getXValue() {

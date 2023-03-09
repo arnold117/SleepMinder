@@ -3,15 +3,15 @@ package com.arnold.sleepminder.lib.charting.components;
 import android.graphics.Color;
 import android.graphics.Paint;
 
+import com.arnold.sleepminder.lib.charting.formatter.DefaultYAxisValueFormatter;
+import com.arnold.sleepminder.lib.charting.formatter.YAxisValueFormatter;
+import com.arnold.sleepminder.lib.charting.formatter.DefaultValueFormatter;
 import com.arnold.sleepminder.lib.charting.utils.Utils;
 
 /**
- * Class representing the y-axis labels settings and its entries. Only use the setter methods to
- * modify it. Do not
- * access public variables directly. Be aware that not all features the YLabels class provides
- * are suitable for the
- * RadarChart. Customizations that affect the value range of the axis need to be applied before
- * setting data for the
+ * Class representing the y-axis labels settings and its entries. Only use the setter methods to modify it. Do not
+ * access public variables directly. Be aware that not all features the YLabels class provides are suitable for the
+ * RadarChart. Customizations that affect the value range of the axis need to be applied before setting data for the
  * chart.
  *
  * @author Philipp Jahoda
@@ -19,9 +19,29 @@ import com.arnold.sleepminder.lib.charting.utils.Utils;
 public class YAxis extends AxisBase {
 
     /**
-     * indicates if the bottom y-label entry is drawn or not
+     * custom formatter that is used instead of the auto-formatter if set
      */
-    private boolean mDrawBottomYLabelEntry = true;
+    protected YAxisValueFormatter mYAxisValueFormatter;
+
+    /**
+     * the actual array of entries
+     */
+    public float[] mEntries = new float[]{};
+
+    /**
+     * the number of entries the legend contains
+     */
+    public int mEntryCount;
+
+    /**
+     * the number of decimal digits to use
+     */
+    public int mDecimals;
+
+    /**
+     * the number of y-label entries the y-labels should have, default 6
+     */
+    private int mLabelCount = 6;
 
     /**
      * indicates if the top y-label entry is drawn or not
@@ -29,24 +49,24 @@ public class YAxis extends AxisBase {
     private boolean mDrawTopYLabelEntry = true;
 
     /**
+     * if true, the y-labels show only the minimum and maximum value
+     */
+    protected boolean mShowOnlyMinMax = false;
+
+    /**
      * flag that indicates if the axis is inverted or not
      */
     protected boolean mInverted = false;
 
     /**
+     * if true, the set number of y-labels will be forced
+     */
+    protected boolean mForceLabels = false;
+
+    /**
      * flag that indicates if the zero-line should be drawn regardless of other grid lines
      */
     protected boolean mDrawZeroLine = false;
-
-    /**
-     * flag indicating that auto scale min restriction should be used
-     */
-    private boolean mUseAutoScaleRestrictionMin = false;
-
-    /**
-     * flag indicating that auto scale max restriction should be used
-     */
-    private boolean mUseAutoScaleRestrictionMax = false;
 
     /**
      * Color of the zero line
@@ -74,11 +94,6 @@ public class YAxis extends AxisBase {
     private YAxisLabelPosition mPosition = YAxisLabelPosition.OUTSIDE_CHART;
 
     /**
-     * the horizontal offset of the y-label
-     */
-    private float mXLabelOffset = 0.0f;
-
-    /**
      * enum for the position of the y-labels relative to the chart
      */
     public enum YAxisLabelPosition {
@@ -92,7 +107,7 @@ public class YAxis extends AxisBase {
 
     /**
      * the minimum width that the axis should take (in dp).
-     * <p/>
+     *
      * default: 0.0
      */
     protected float mMinWidth = 0.f;
@@ -105,6 +120,19 @@ public class YAxis extends AxisBase {
     protected float mMaxWidth = Float.POSITIVE_INFINITY;
 
     /**
+     * When true, axis labels are controlled by the `granularity` property.
+     * When false, axis values could possibly be repeated.
+     * This could happen if two adjacent axis values are rounded to same value.
+     * If using granularity this could be avoided by having fewer axis values visible.
+     */
+    protected boolean mGranularityEnabled = true;
+
+    /**
+     * the minimum interval between axis values
+     */
+    protected float mGranularity = 1.0f;
+
+    /**
      * Enum that specifies the axis a DataSet should be plotted against, either LEFT or RIGHT.
      *
      * @author Philipp Jahoda
@@ -115,8 +143,6 @@ public class YAxis extends AxisBase {
 
     public YAxis() {
         super();
-
-        // default left
         this.mAxisDependency = AxisDependency.LEFT;
         this.mYOffset = 0f;
     }
@@ -140,7 +166,6 @@ public class YAxis extends AxisBase {
 
     /**
      * Sets the minimum width that the axis should take (in dp).
-     *
      * @param minWidth
      */
     public void setMinWidth(float minWidth) {
@@ -156,11 +181,40 @@ public class YAxis extends AxisBase {
 
     /**
      * Sets the maximum width that the axis can take (in dp).
-     *
      * @param maxWidth
      */
     public void setMaxWidth(float maxWidth) {
         mMaxWidth = maxWidth;
+    }
+
+    /**
+     * @return true if granularity is enabled
+     */
+    public boolean isGranularityEnabled() {
+        return mGranularityEnabled;
+    }
+
+    /**
+     * Enabled/disable granularity control on axis value intervals
+     * @param enabled
+     */
+    public void setGranularityEnabled(boolean enabled) {
+        mGranularityEnabled = true;
+    }
+
+    /**
+     * @return the minimum interval between axis values
+     */
+    public float getGranularity() {
+        return mGranularity;
+    }
+
+    /**
+     * Set the minimum interval between axis values. This can be used to avoid label duplicating when zooming in.
+     * @param granularity
+     */
+    public void setGranularity(float granularity) {
+        mGranularity = granularity;
     }
 
     /**
@@ -180,22 +234,6 @@ public class YAxis extends AxisBase {
     }
 
     /**
-     * returns the horizontal offset of the y-label
-     */
-    public float getLabelXOffset() {
-        return mXLabelOffset;
-    }
-
-    /**
-     * sets the horizontal offset of the y-label
-     *
-     * @param xOffset
-     */
-    public void setLabelXOffset(float xOffset) {
-        mXLabelOffset = xOffset;
-    }
-
-    /**
      * returns true if drawing the top y-axis label entry is enabled
      *
      * @return
@@ -205,17 +243,7 @@ public class YAxis extends AxisBase {
     }
 
     /**
-     * returns true if drawing the bottom y-axis label entry is enabled
-     *
-     * @return
-     */
-    public boolean isDrawBottomYLabelEntryEnabled() {
-        return mDrawBottomYLabelEntry;
-    }
-
-    /**
-     * set this to true to enable drawing the top y-label entry. Disabling this can be helpful
-     * when the top y-label and
+     * set this to true to enable drawing the top y-label entry. Disabling this can be helpful when the top y-label and
      * left x-label interfere with each other. default: true
      *
      * @param enabled
@@ -225,8 +253,63 @@ public class YAxis extends AxisBase {
     }
 
     /**
-     * If this is set to true, the y-axis is inverted which means that low values are on top of
-     * the chart, high values
+     * sets the number of label entries for the y-axis max = 25, min = 2, default: 6, be aware that this number is not
+     * fixed (if force == false) and can only be approximated.
+     *
+     * @param count the number of y-axis labels that sould be displayed
+     * @param force if enabled, the set label count will be forced, meaning that the exact specified count of labels will
+     *              be drawn and evenly distributed alongside the axis - this might cause labels to have uneven values
+     */
+    public void setLabelCount(int count, boolean force) {
+
+        if (count > 25)
+            count = 25;
+        if (count < 2)
+            count = 2;
+
+        mLabelCount = count;
+        mForceLabels = force;
+    }
+
+    /**
+     * Returns the number of label entries the y-axis should have
+     *
+     * @return
+     */
+    public int getLabelCount() {
+        return mLabelCount;
+    }
+
+    /**
+     * Returns true if focing the y-label count is enabled. Default: false
+     *
+     * @return
+     */
+    public boolean isForceLabelsEnabled() {
+        return mForceLabels;
+    }
+
+    /**
+     * If enabled, the YLabels will only show the minimum and maximum value of the chart. This will ignore/override the
+     * set label count.
+     *
+     * @param enabled
+     */
+    public void setShowOnlyMinMax(boolean enabled) {
+        mShowOnlyMinMax = enabled;
+    }
+
+    /**
+     * Returns true if showing only min and max value is enabled.
+     *
+     * @return
+     */
+    public boolean isShowOnlyMinMaxEnabled() {
+        return mShowOnlyMinMax;
+    }
+
+    /**
+     * If this is set to true, the y-axis is inverted which means that low values are on top of the chart, high values
      * on bottom.
      *
      * @param enabled
@@ -246,16 +329,16 @@ public class YAxis extends AxisBase {
 
     /**
      * This method is deprecated.
-     * Use setAxisMinimum(...) / setAxisMaximum(...) instead.
+     * Use setAxisMinValue(...) / setAxisMaxValue(...) instead.
      *
      * @param startAtZero
      */
     @Deprecated
     public void setStartAtZero(boolean startAtZero) {
         if (startAtZero)
-            setAxisMinimum(0f);
+            setAxisMinValue(0f);
         else
-            resetAxisMinimum();
+            resetAxisMinValue();
     }
 
     /**
@@ -357,7 +440,7 @@ public class YAxis extends AxisBase {
             maxWidth = Utils.convertDpToPixel(maxWidth);
 
         width = Math.max(minWidth, Math.min(width, maxWidth > 0.0 ? maxWidth : width));
-
+        
         return width;
     }
 
@@ -375,78 +458,103 @@ public class YAxis extends AxisBase {
         return (float) Utils.calcTextHeight(p, label) + getYOffset() * 2f;
     }
 
+    @Override
+    public String getLongestLabel() {
+
+        String longest = "";
+
+        for (int i = 0; i < mEntries.length; i++) {
+            String text = getFormattedLabel(i);
+
+            if (longest.length() < text.length())
+                longest = text;
+        }
+
+        return longest;
+    }
+
+    /**
+     * Returns the formatted y-label at the specified index. This will either use the auto-formatter or the custom
+     * formatter (if one is set).
+     *
+     * @param index
+     * @return
+     */
+    public String getFormattedLabel(int index) {
+
+        if (index < 0 || index >= mEntries.length)
+            return "";
+        else
+            return getValueFormatter().getFormattedValue(mEntries[index], this);
+    }
+
+    /**
+     * Sets the formatter to be used for formatting the axis labels. If no formatter is set, the chart will
+     * automatically determine a reasonable formatting (concerning decimals) for all the values that are drawn inside
+     * the chart. Use chart.getDefaultValueFormatter() to use the formatter calculated by the chart.
+     *
+     * @param f
+     */
+    public void setValueFormatter(YAxisValueFormatter f) {
+
+        if (f == null)
+            mYAxisValueFormatter = new DefaultYAxisValueFormatter(mDecimals);
+        else
+            mYAxisValueFormatter = f;
+    }
+
+    /**
+     * Returns the formatter used for formatting the axis labels.
+     *
+     * @return
+     */
+    public YAxisValueFormatter getValueFormatter() {
+
+        if (mYAxisValueFormatter == null)
+            mYAxisValueFormatter = new DefaultYAxisValueFormatter(mDecimals);
+
+        return mYAxisValueFormatter;
+    }
+
+    /**
+     * If this component has no YAxisValueFormatter or is only equipped with the default one (no custom set), return true.
+     *
+     * @return
+     */
+    public boolean needsDefaultFormatter() {
+        if (mYAxisValueFormatter == null)
+            return true;
+        if (mYAxisValueFormatter instanceof DefaultValueFormatter)
+            return true;
+
+        return false;
+    }
+
     /**
      * Returns true if this axis needs horizontal offset, false if no offset is needed.
      *
      * @return
      */
     public boolean needsOffset() {
-        if (isEnabled() && isDrawLabelsEnabled() && getLabelPosition() == YAxisLabelPosition
-                .OUTSIDE_CHART)
+        if (isEnabled() && isDrawLabelsEnabled() && getLabelPosition() == YAxisLabelPosition.OUTSIDE_CHART)
             return true;
         else
             return false;
     }
 
     /**
-     * Returns true if autoscale restriction for axis min value is enabled
+     * Calculates the minimum, maximum and range values of the YAxis with the given
+     * minimum and maximum values from the chart data.
+     * @param dataMin the y-min value according to chart data
+     * @param dataMax the y-max value according to chart data
      */
-    @Deprecated
-    public boolean isUseAutoScaleMinRestriction( ) {
-        return mUseAutoScaleRestrictionMin;
-    }
+    public void calcMinMax(float dataMin, float dataMax) {
 
-    /**
-     * Sets autoscale restriction for axis min value as enabled/disabled
-     */
-    @Deprecated
-    public void setUseAutoScaleMinRestriction( boolean isEnabled ) {
-        mUseAutoScaleRestrictionMin = isEnabled;
-    }
+        // if custom, use value as is, else use data value
+        float min = mCustomAxisMin ? mAxisMinimum : dataMin;
+        float max = mCustomAxisMax ? mAxisMaximum : dataMax;
 
-    /**
-     * Returns true if autoscale restriction for axis max value is enabled
-     */
-    @Deprecated
-    public boolean isUseAutoScaleMaxRestriction() {
-        return mUseAutoScaleRestrictionMax;
-    }
-
-    /**
-     * Sets autoscale restriction for axis max value as enabled/disabled
-     */
-    @Deprecated
-    public void setUseAutoScaleMaxRestriction( boolean isEnabled ) {
-        mUseAutoScaleRestrictionMax = isEnabled;
-    }
-
-
-    @Override
-    public void calculate(float dataMin, float dataMax) {
-
-        float min = dataMin;
-        float max = dataMax;
-
-        // Make sure max is greater than min
-        // Discussion: https://github.com/danielgindi/Charts/pull/3650#discussion_r221409991
-        if (min > max)
-        {
-            if (mCustomAxisMax && mCustomAxisMin)
-            {
-                float t = min;
-                min = max;
-                max = t;
-            }
-            else if (mCustomAxisMax)
-            {
-                min = max < 0f ? max * 1.5f : max * 0.5f;
-            }
-            else if (mCustomAxisMin)
-            {
-                max = min < 0f ? min * 0.5f : min * 1.5f;
-            }
-        }
-
+        // temporary range (before calculations)
         float range = Math.abs(max - min);
 
         // in case all values are equal
@@ -455,13 +563,21 @@ public class YAxis extends AxisBase {
             min = min - 1f;
         }
 
-        // recalculate
-        range = Math.abs(max - min);
+        // bottom-space only effects non-custom min
+        if(!mCustomAxisMin) {
 
-        // calc extra spacing
-        this.mAxisMinimum = mCustomAxisMin ? this.mAxisMinimum : min - (range / 100f) * getSpaceBottom();
-        this.mAxisMaximum = mCustomAxisMax ? this.mAxisMaximum : max + (range / 100f) * getSpaceTop();
+            float bottomSpace = range / 100f * getSpaceBottom();
+            this.mAxisMinimum = (min - bottomSpace);
+        }
 
-        this.mAxisRange = Math.abs(this.mAxisMinimum - this.mAxisMaximum);
+        // top-space only effects non-custom max
+        if(!mCustomAxisMax) {
+
+            float topSpace = range / 100f * getSpaceTop();
+            this.mAxisMaximum = (max + topSpace);
+        }
+
+        // calc actual range
+        this.mAxisRange = Math.abs(this.mAxisMaximum - this.mAxisMinimum);
     }
 }

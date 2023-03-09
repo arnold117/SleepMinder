@@ -1,18 +1,18 @@
 package com.arnold.sleepminder.lib.charting.interfaces.datasets;
 
 import com.arnold.sleepminder.lib.charting.data.BarEntry;
-import com.arnold.sleepminder.lib.charting.utils.Fill;
-
-import java.util.List;
 
 /**
  * Created by philipp on 21/10/15.
  */
 public interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<BarEntry> {
 
-    List<Fill> getFills();
-
-    Fill getFill(int index);
+    /**
+     * Returns the space between bars as the actual value (0 - 1.0f)
+     *
+     * @return
+     */
+    float getBarSpace();
 
     /**
      * Returns true if this DataSet is stacked (stacksize > 1) or not.
@@ -36,21 +36,6 @@ public interface IBarDataSet extends IBarLineScatterCandleBubbleDataSet<BarEntry
      * @return
      */
     int getBarShadowColor();
-
-    /**
-     * Returns the width used for drawing borders around the bars.
-     * If borderWidth == 0, no border will be drawn.
-     *
-     * @return
-     */
-    float getBarBorderWidth();
-
-    /**
-     * Returns the color drawing borders around the bars.
-     *
-     * @return
-     */
-    int getBarBorderColor();
 
     /**
      * Returns the alpha value (transparency) that is used for drawing the

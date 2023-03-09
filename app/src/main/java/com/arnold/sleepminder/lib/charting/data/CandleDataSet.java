@@ -25,7 +25,7 @@ public class CandleDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
     /**
      * should the candle bars show?
      * when false, only "ticks" will show
-     * <p/>
+     *
      * - default: true
      */
     private boolean mShowCandleBar = true;
@@ -55,23 +55,23 @@ public class CandleDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
     /**
      * color for open == close
      */
-    protected int mNeutralColor = ColorTemplate.COLOR_SKIP;
+    protected int mNeutralColor = ColorTemplate.COLOR_NONE;
 
     /**
      * color for open < close
      */
-    protected int mIncreasingColor = ColorTemplate.COLOR_SKIP;
+    protected int mIncreasingColor = ColorTemplate.COLOR_NONE;
 
     /**
      * color for open > close
      */
-    protected int mDecreasingColor = ColorTemplate.COLOR_SKIP;
+    protected int mDecreasingColor = ColorTemplate.COLOR_NONE;
 
     /**
      * shadow line color, set -1 for backward compatibility and uses default
      * color
      */
-    protected int mShadowColor = ColorTemplate.COLOR_SKIP;
+    protected int mShadowColor = ColorTemplate.COLOR_NONE;
 
     public CandleDataSet(List<CandleEntry> yVals, String label) {
         super(yVals, label);
@@ -79,56 +79,56 @@ public class CandleDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
 
     @Override
     public DataSet<CandleEntry> copy() {
-        List<CandleEntry> entries = new ArrayList<CandleEntry>();
-        for (int i = 0; i < mEntries.size(); i++) {
-            entries.add(mEntries.get(i).copy());
+
+        List<CandleEntry> yVals = new ArrayList<CandleEntry>();
+
+        for (int i = 0; i < mYVals.size(); i++) {
+            yVals.add(((CandleEntry) mYVals.get(i)).copy());
         }
-        CandleDataSet copied = new CandleDataSet(entries, getLabel());
-        copy(copied);
+
+        CandleDataSet copied = new CandleDataSet(yVals, getLabel());
+        copied.mColors = mColors;
+        copied.mShadowWidth = mShadowWidth;
+        copied.mShowCandleBar = mShowCandleBar;
+        copied.mBarSpace = mBarSpace;
+        copied.mHighLightColor = mHighLightColor;
+        copied.mIncreasingPaintStyle = mIncreasingPaintStyle;
+        copied.mDecreasingPaintStyle = mDecreasingPaintStyle;
+        copied.mShadowColor = mShadowColor;
+
         return copied;
     }
 
-    protected void copy(CandleDataSet candleDataSet) {
-        super.copy(candleDataSet);
-        candleDataSet.mShadowWidth = mShadowWidth;
-        candleDataSet.mShowCandleBar = mShowCandleBar;
-        candleDataSet.mBarSpace = mBarSpace;
-        candleDataSet.mShadowColorSameAsCandle = mShadowColorSameAsCandle;
-        candleDataSet.mHighLightColor = mHighLightColor;
-        candleDataSet.mIncreasingPaintStyle = mIncreasingPaintStyle;
-        candleDataSet.mDecreasingPaintStyle = mDecreasingPaintStyle;
-        candleDataSet.mNeutralColor = mNeutralColor;
-        candleDataSet.mIncreasingColor = mIncreasingColor;
-        candleDataSet.mDecreasingColor = mDecreasingColor;
-        candleDataSet.mShadowColor = mShadowColor;
-    }
-
     @Override
-    protected void calcMinMax(CandleEntry e) {
+    public void calcMinMax(int start, int end) {
+        // super.calcMinMax();
 
-        if (e.getLow() < mYMin)
-            mYMin = e.getLow();
+        if (mYVals == null)
+            return;
 
-        if (e.getHigh() > mYMax)
-            mYMax = e.getHigh();
+        if (mYVals.size() == 0)
+            return;
 
-        calcMinMaxX(e);
-    }
+        int endValue;
 
-    @Override
-    protected void calcMinMaxY(CandleEntry e) {
+        if (end == 0 || end >= mYVals.size())
+            endValue = mYVals.size() - 1;
+        else
+            endValue = end;
 
-        if (e.getHigh() < mYMin)
-            mYMin = e.getHigh();
+        mYMin = Float.MAX_VALUE;
+        mYMax = -Float.MAX_VALUE;
 
-        if (e.getHigh() > mYMax)
-            mYMax = e.getHigh();
+        for (int i = start; i <= endValue; i++) {
 
-        if (e.getLow() < mYMin)
-            mYMin = e.getLow();
+            CandleEntry e = mYVals.get(i);
 
-        if (e.getLow() > mYMax)
-            mYMax = e.getLow();
+            if (e.getLow() < mYMin)
+                mYMin = e.getLow();
+
+            if (e.getHigh() > mYMax)
+                mYMax = e.getHigh();
+        }
     }
 
     /**

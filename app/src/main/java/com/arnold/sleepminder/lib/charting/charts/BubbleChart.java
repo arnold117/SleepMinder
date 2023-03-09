@@ -5,6 +5,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 
 import com.arnold.sleepminder.lib.charting.interfaces.dataprovider.BubbleDataProvider;
+import com.arnold.sleepminder.lib.charting.interfaces.datasets.IBubbleDataSet;
 import com.arnold.sleepminder.lib.charting.renderer.BubbleChartRenderer;
 import com.arnold.sleepminder.lib.charting.data.BubbleData;
 
@@ -35,6 +36,33 @@ public class BubbleChart extends BarLineChartBase<BubbleData> implements BubbleD
         super.init();
 
         mRenderer = new BubbleChartRenderer(this, mAnimator, mViewPortHandler);
+    }
+
+    @Override
+    protected void calcMinMax() {
+        super.calcMinMax();
+
+        if (mXAxis.mAxisRange == 0 && mData.getYValCount() > 0)
+            mXAxis.mAxisRange = 1;
+
+        mXAxis.mAxisMinimum = -0.5f;
+        mXAxis.mAxisMaximum = (float) mData.getXValCount() - 0.5f;
+
+        if (mRenderer != null) {
+            for (IBubbleDataSet set : mData.getDataSets()) {
+
+                final float xmin = set.getXMin();
+                final float xmax = set.getXMax();
+
+                if (xmin < mXAxis.mAxisMinimum)
+                    mXAxis.mAxisMinimum = xmin;
+
+                if (xmax > mXAxis.mAxisMaximum)
+                    mXAxis.mAxisMaximum = xmax;
+            }
+        }
+
+        mXAxis.mAxisRange = Math.abs(mXAxis.mAxisMaximum - mXAxis.mAxisMinimum);
     }
 
     public BubbleData getBubbleData() {

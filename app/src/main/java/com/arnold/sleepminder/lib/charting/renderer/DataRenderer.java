@@ -8,9 +8,8 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 
 import com.arnold.sleepminder.lib.charting.animation.ChartAnimator;
-import com.arnold.sleepminder.lib.charting.formatter.IValueFormatter;
+import com.arnold.sleepminder.lib.charting.formatter.ValueFormatter;
 import com.arnold.sleepminder.lib.charting.highlight.Highlight;
-import com.arnold.sleepminder.lib.charting.interfaces.dataprovider.ChartInterface;
 import com.arnold.sleepminder.lib.charting.interfaces.datasets.IDataSet;
 import com.arnold.sleepminder.lib.charting.data.Entry;
 import com.arnold.sleepminder.lib.charting.utils.Utils;
@@ -64,11 +63,6 @@ public abstract class DataRenderer extends Renderer {
         mHighlightPaint.setStyle(Paint.Style.STROKE);
         mHighlightPaint.setStrokeWidth(2f);
         mHighlightPaint.setColor(Color.rgb(255, 187, 115));
-    }
-
-    protected boolean isDrawingValuesAllowed(ChartInterface chart) {
-        return chart.getData().getEntryCount() < chart.getMaxVisibleCount()
-                * mViewPortHandler.getScaleX();
     }
 
     /**
@@ -134,7 +128,7 @@ public abstract class DataRenderer extends Renderer {
     public abstract void drawValues(Canvas c);
 
     /**
-     * Draws the value of the given entry by using the provided IValueFormatter.
+     * Draws the value of the given entry by using the provided ValueFormatter.
      *
      * @param c            canvas
      * @param formatter    formatter for custom value-formatting
@@ -145,7 +139,7 @@ public abstract class DataRenderer extends Renderer {
      * @param y            position
      * @param color
      */
-    public void drawValue(Canvas c, IValueFormatter formatter, float value, Entry entry, int dataSetIndex, float x, float y, int color) {
+    public void drawValue(Canvas c, ValueFormatter formatter, float value, Entry entry, int dataSetIndex, float x, float y, int color) {
         mValuePaint.setColor(color);
         c.drawText(formatter.getFormattedValue(value, entry, dataSetIndex, mViewPortHandler), x, y, mValuePaint);
     }

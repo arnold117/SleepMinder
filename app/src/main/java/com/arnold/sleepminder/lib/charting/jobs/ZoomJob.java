@@ -6,7 +6,6 @@ import android.view.View;
 
 import com.arnold.sleepminder.lib.charting.charts.BarLineChartBase;
 import com.arnold.sleepminder.lib.charting.components.YAxis;
-import com.arnold.sleepminder.lib.charting.utils.ObjectPool;
 import com.arnold.sleepminder.lib.charting.utils.Transformer;
 import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
 
@@ -15,38 +14,12 @@ import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
  */
 public class ZoomJob extends ViewPortJob {
 
-    private static ObjectPool<ZoomJob> pool;
-
-    static {
-        pool = ObjectPool.create(1, new ZoomJob(null, 0, 0, 0, 0, null, null, null));
-        pool.setReplenishPercentage(0.5f);
-    }
-
-    public static ZoomJob getInstance(ViewPortHandler viewPortHandler, float scaleX, float scaleY, float xValue, float yValue,
-                                      Transformer trans, YAxis.AxisDependency axis, View v) {
-        ZoomJob result = pool.get();
-        result.xValue = xValue;
-        result.yValue = yValue;
-        result.scaleX = scaleX;
-        result.scaleY = scaleY;
-        result.mViewPortHandler = viewPortHandler;
-        result.mTrans = trans;
-        result.axisDependency = axis;
-        result.view = v;
-        return result;
-    }
-
-    public static void recycleInstance(ZoomJob instance) {
-        pool.recycle(instance);
-    }
-
     protected float scaleX;
     protected float scaleY;
 
     protected YAxis.AxisDependency axisDependency;
 
-    public ZoomJob(ViewPortHandler viewPortHandler, float scaleX, float scaleY, float xValue, float yValue, Transformer trans,
-                   YAxis.AxisDependency axis, View v) {
+    public ZoomJob(ViewPortHandler viewPortHandler, float scaleX, float scaleY, float xValue, float yValue, Transformer trans, YAxis.AxisDependency axis, View v) {
         super(viewPortHandler, xValue, yValue, trans, v);
 
         this.scaleX = scaleX;
@@ -54,34 +27,24 @@ public class ZoomJob extends ViewPortJob {
         this.axisDependency = axis;
     }
 
-    protected Matrix mRunMatrixBuffer = new Matrix();
-
     @Override
     public void run() {
 
-        Matrix save = mRunMatrixBuffer;
-        mViewPortHandler.zoom(scaleX, scaleY, save);
+        Matrix save = mViewPortHandler.zoom(scaleX, scaleY);
         mViewPortHandler.refresh(save, view, false);
 
-        float yValsInView = ((BarLineChartBase) view).getAxis(axisDependency).mAxisRange / mViewPortHandler.getScaleY();
-        float xValsInView = ((BarLineChartBase) view).getXAxis().mAxisRange / mViewPortHandler.getScaleX();
+        float valsInView = ((BarLineChartBase) view).getDeltaY(axisDependency) / mViewPortHandler.getScaleY();
+        float xsInView =  ((BarLineChartBase) view).getXAxis().getValues().size() / mViewPortHandler.getScaleX();
 
-        pts[0] = xValue - xValsInView / 2f;
-        pts[1] = yValue + yValsInView / 2f;
+        pts[0] = xValue - xsInView / 2f;
+        pts[1] = yValue + valsInView / 2f;
 
         mTrans.pointValuesToPixel(pts);
 
-        mViewPortHandler.translate(pts, save);
+        save = mViewPortHandler.translate(pts);
         mViewPortHandler.refresh(save, view, false);
 
         ((BarLineChartBase) view).calculateOffsets();
         view.postInvalidate();
-
-        recycleInstance(this);
-    }
-
-    @Override
-    protected ObjectPool.Poolable instantiate() {
-        return new ZoomJob(null, 0, 0, 0, 0, null, null, null);
     }
 }

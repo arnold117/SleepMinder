@@ -7,10 +7,11 @@ import com.arnold.sleepminder.lib.charting.utils.Transformer;
 public interface BarLineScatterCandleBubbleDataProvider extends ChartInterface {
 
     Transformer getTransformer(AxisDependency axis);
+    int getMaxVisibleCount();
     boolean isInverted(AxisDependency axis);
     
-    float getLowestVisibleX();
-    float getHighestVisibleX();
+    int getLowestVisibleXIndex();
+    int getHighestVisibleXIndex();
 
     BarLineScatterCandleBubbleData getData();
 }

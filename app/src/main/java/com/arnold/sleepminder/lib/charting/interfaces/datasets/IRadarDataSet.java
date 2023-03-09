@@ -1,11 +1,11 @@
 package com.arnold.sleepminder.lib.charting.interfaces.datasets;
 
-import com.arnold.sleepminder.lib.charting.data.RadarEntry;
+import com.arnold.sleepminder.lib.charting.data.Entry;
 
 /**
  * Created by Philipp Jahoda on 03/11/15.
  */
-public interface IRadarDataSet extends ILineRadarDataSet<RadarEntry> {
+public interface IRadarDataSet extends ILineRadarDataSet<Entry> {
 
     /// flag indicating whether highlight circle should be drawn or not
     boolean isDrawHighlightCircleEnabled();

@@ -12,8 +12,7 @@ import java.text.DecimalFormat;
  * A formatter specifically for stacked BarChart that allows to specify whether the all stack values
  * or just the top value should be drawn.
  */
-public class StackedValueFormatter implements IValueFormatter
-{
+public class StackedValueFormatter implements ValueFormatter {
 
     /**
      * if true, all stack values of the stacked bar entry are drawn, else only top
@@ -54,7 +53,7 @@ public class StackedValueFormatter implements IValueFormatter
         if (!mDrawWholeStack && entry instanceof BarEntry) {
 
             BarEntry barEntry = (BarEntry) entry;
-            float[] vals = barEntry.getYVals();
+            float[] vals = barEntry.getVals();
 
             if (vals != null) {
 
@@ -62,7 +61,7 @@ public class StackedValueFormatter implements IValueFormatter
                 if (vals[vals.length - 1] == value) {
 
                     // return the "sum" across all stack values
-                    return mFormat.format(barEntry.getY()) + mAppendix;
+                    return mFormat.format(barEntry.getVal()) + mAppendix;
                 } else {
                     return ""; // return empty
                 }

@@ -10,7 +10,7 @@ import com.arnold.sleepminder.lib.charting.data.CandleData;
 
 /**
  * Financial chart type that draws candle-sticks (OHCL chart).
- *
+ * 
  * @author Philipp Jahoda
  */
 public class CandleStickChart extends BarLineChartBase<CandleData> implements CandleDataProvider {
@@ -32,9 +32,15 @@ public class CandleStickChart extends BarLineChartBase<CandleData> implements Ca
         super.init();
 
         mRenderer = new CandleStickChartRenderer(this, mAnimator, mViewPortHandler);
+        mXAxis.mAxisMinimum = -0.5f;
+    }
 
-        getXAxis().setSpaceMin(0.5f);
-        getXAxis().setSpaceMax(0.5f);
+    @Override
+    protected void calcMinMax() {
+        super.calcMinMax();
+
+        mXAxis.mAxisMaximum += 0.5f;
+        mXAxis.mAxisRange = Math.abs(mXAxis.mAxisMaximum - mXAxis.mAxisMinimum);
     }
 
     @Override

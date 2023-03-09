@@ -51,9 +51,6 @@ public class ColorTemplate {
             Color.rgb(192, 255, 140), Color.rgb(255, 247, 140), Color.rgb(255, 208, 140),
             Color.rgb(140, 234, 255), Color.rgb(255, 140, 157)
     };
-    public static final int[] MATERIAL_COLORS = {
-            rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db")
-    };
 
     /**
      * Converts the given hex-color-string to rgb.
@@ -78,14 +75,7 @@ public class ColorTemplate {
         return Color.rgb(51, 181, 229);
     }
 
-    /**
-     * Sets the alpha component of the given color.
-     *
-     * @param color
-     * @param alpha 0 - 255
-     * @return
-     */
-    public static int colorWithAlpha(int color, int alpha) {
+    public static int getColorWithAlphaComponent(int color, int alpha) {
         return (color & 0xffffff) | ((alpha & 0xff) << 24);
     }
 

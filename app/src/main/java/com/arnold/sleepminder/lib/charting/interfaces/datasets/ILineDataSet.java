@@ -2,21 +2,13 @@ package com.arnold.sleepminder.lib.charting.interfaces.datasets;
 
 import android.graphics.DashPathEffect;
 
+import com.arnold.sleepminder.lib.charting.formatter.FillFormatter;
 import com.arnold.sleepminder.lib.charting.data.Entry;
-import com.arnold.sleepminder.lib.charting.data.LineDataSet;
-import com.arnold.sleepminder.lib.charting.formatter.IFillFormatter;
 
 /**
  * Created by Philpp Jahoda on 21/10/15.
  */
 public interface ILineDataSet extends ILineRadarDataSet<Entry> {
-
-    /**
-     * Returns the drawing mode for this line dataset
-     *
-     * @return
-     */
-    LineDataSet.Mode getMode();
 
     /**
      * Returns the intensity of the cubic lines (the effect intensity).
@@ -26,21 +18,24 @@ public interface ILineDataSet extends ILineRadarDataSet<Entry> {
      */
     float getCubicIntensity();
 
-    @Deprecated
+    /**
+     * Returns true if drawing cubic lines is enabled, false if not.
+     *
+     * @return
+     */
     boolean isDrawCubicEnabled();
 
-    @Deprecated
+    /**
+     * Returns true if drawing stepped lines is enabled, false if not.
+     *
+     * @return
+     */
     boolean isDrawSteppedEnabled();
 
     /**
      * Returns the size of the drawn circles.
      */
     float getCircleRadius();
-
-    /**
-     * Returns the hole radius of the drawn circles.
-     */
-    float getCircleHoleRadius();
 
     /**
      * Returns the color at the given index of the DataSet's circle-color array.
@@ -50,13 +45,6 @@ public interface ILineDataSet extends ILineRadarDataSet<Entry> {
      * @return
      */
     int getCircleColor(int index);
-
-    /**
-     * Returns the number of colors in this DataSet's circle-color array.
-     *
-     * @return
-     */
-    int getCircleColorCount();
 
     /**
      * Returns true if drawing circles for this DataSet is enabled, false if not
@@ -95,9 +83,9 @@ public interface ILineDataSet extends ILineRadarDataSet<Entry> {
     boolean isDashedLineEnabled();
 
     /**
-     * Returns the IFillFormatter that is set for this DataSet.
+     * Returns the FillFormatter that is set for this DataSet.
      *
      * @return
      */
-    IFillFormatter getFillFormatter();
+    FillFormatter getFillFormatter();
 }

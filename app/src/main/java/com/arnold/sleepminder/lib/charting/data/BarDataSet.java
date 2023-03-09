@@ -4,12 +4,16 @@ package com.arnold.sleepminder.lib.charting.data;
 import android.graphics.Color;
 
 import com.arnold.sleepminder.lib.charting.interfaces.datasets.IBarDataSet;
-import com.arnold.sleepminder.lib.charting.utils.Fill;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> implements IBarDataSet {
+
+    /**
+     * space indicator between the bars 0.1f == 10 %
+     */
+    private float mBarSpace = 0.15f;
 
     /**
      * the maximum number of bars that are stacked upon each other, this value
@@ -21,10 +25,6 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
      * the color used for drawing the bar shadows
      */
     private int mBarShadowColor = Color.rgb(215, 215, 215);
-
-    private float mBarBorderWidth = 0.0f;
-
-    private int mBarBorderColor = Color.BLACK;
 
     /**
      * the alpha value used to draw the highlight indicator bar
@@ -39,9 +39,9 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
     /**
      * array of labels used to describe the different values of the stacked bars
      */
-    private String[] mStackLabels = new String[]{};
-
-    protected List<Fill> mFills = null;
+    private String[] mStackLabels = new String[]{
+            "Stack"
+    };
 
     public BarDataSet(List<BarEntry> yVals, String label) {
         super(yVals, label);
@@ -54,83 +54,23 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
 
     @Override
     public DataSet<BarEntry> copy() {
-        List<BarEntry> entries = new ArrayList<BarEntry>();
-        for (int i = 0; i < mEntries.size(); i++) {
-            entries.add(mEntries.get(i).copy());
+
+        List<BarEntry> yVals = new ArrayList<BarEntry>();
+
+        for (int i = 0; i < mYVals.size(); i++) {
+            yVals.add(((BarEntry) mYVals.get(i)).copy());
         }
-        BarDataSet copied = new BarDataSet(entries, getLabel());
-        copy(copied);
+
+        BarDataSet copied = new BarDataSet(yVals, getLabel());
+        copied.mColors = mColors;
+        copied.mStackSize = mStackSize;
+        copied.mBarSpace = mBarSpace;
+        copied.mBarShadowColor = mBarShadowColor;
+        copied.mStackLabels = mStackLabels;
+        copied.mHighLightColor = mHighLightColor;
+        copied.mHighLightAlpha = mHighLightAlpha;
+
         return copied;
-    }
-
-    protected void copy(BarDataSet barDataSet) {
-        super.copy(barDataSet);
-        barDataSet.mStackSize = mStackSize;
-        barDataSet.mBarShadowColor = mBarShadowColor;
-        barDataSet.mBarBorderWidth = mBarBorderWidth;
-        barDataSet.mStackLabels = mStackLabels;
-        barDataSet.mHighLightAlpha = mHighLightAlpha;
-    }
-
-    @Override
-    public List<Fill> getFills() {
-        return mFills;
-    }
-
-    @Override
-    public Fill getFill(int index) {
-        return mFills.get(index % mFills.size());
-    }
-
-    /**
-     * This method is deprecated.
-     * Use getFills() instead.
-     */
-    @Deprecated
-    public List<Fill> getGradients() {
-        return mFills;
-    }
-
-    /**
-     * This method is deprecated.
-     * Use getFill(...) instead.
-     *
-     * @param index
-     */
-    @Deprecated
-    public Fill getGradient(int index) {
-        return getFill(index);
-    }
-
-    /**
-     * Sets the start and end color for gradient color, ONLY color that should be used for this DataSet.
-     *
-     * @param startColor
-     * @param endColor
-     */
-    public void setGradientColor(int startColor, int endColor) {
-        mFills.clear();
-        mFills.add(new Fill(startColor, endColor));
-    }
-
-    /**
-     * This method is deprecated.
-     * Use setFills(...) instead.
-     *
-     * @param gradientColors
-     */
-    @Deprecated
-    public void setGradientColors(List<Fill> gradientColors) {
-        this.mFills = gradientColors;
-    }
-
-    /**
-     * Sets the fills for the bars in this dataset.
-     *
-     * @param fills
-     */
-    public void setFills(List<Fill> fills) {
-        this.mFills = fills;
     }
 
     /**
@@ -143,7 +83,7 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
 
         for (int i = 0; i < yVals.size(); i++) {
 
-            float[] vals = yVals.get(i).getYVals();
+            float[] vals = yVals.get(i).getVals();
 
             if (vals == null)
                 mEntryCountStacks++;
@@ -160,7 +100,7 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
 
         for (int i = 0; i < yVals.size(); i++) {
 
-            float[] vals = yVals.get(i).getYVals();
+            float[] vals = yVals.get(i).getVals();
 
             if (vals != null && vals.length > mStackSize)
                 mStackSize = vals.length;
@@ -168,27 +108,53 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
     }
 
     @Override
-    protected void calcMinMax(BarEntry e) {
+    public void calcMinMax(int start, int end) {
 
-        if (e != null && !Float.isNaN(e.getY())) {
+        if (mYVals == null)
+            return;
 
-            if (e.getYVals() == null) {
+        final int yValCount = mYVals.size();
 
-                if (e.getY() < mYMin)
-                    mYMin = e.getY();
+        if (yValCount == 0)
+            return;
 
-                if (e.getY() > mYMax)
-                    mYMax = e.getY();
-            } else {
+        int endValue;
 
-                if (-e.getNegativeSum() < mYMin)
-                    mYMin = -e.getNegativeSum();
+        if (end == 0 || end >= yValCount)
+            endValue = yValCount - 1;
+        else
+            endValue = end;
 
-                if (e.getPositiveSum() > mYMax)
-                    mYMax = e.getPositiveSum();
+        mYMin = Float.MAX_VALUE;
+        mYMax = -Float.MAX_VALUE;
+
+        for (int i = start; i <= endValue; i++) {
+
+            BarEntry e = mYVals.get(i);
+
+            if (e != null && !Float.isNaN(e.getVal())) {
+
+                if (e.getVals() == null) {
+
+                    if (e.getVal() < mYMin)
+                        mYMin = e.getVal();
+
+                    if (e.getVal() > mYMax)
+                        mYMax = e.getVal();
+                } else {
+
+                    if (-e.getNegativeSum() < mYMin)
+                        mYMin = -e.getNegativeSum();
+
+                    if (e.getPositiveSum() > mYMax)
+                        mYMax = e.getPositiveSum();
+                }
             }
+        }
 
-            calcMinMaxX(e);
+        if (mYMin == Float.MAX_VALUE) {
+            mYMin = 0.f;
+            mYMax = 0.f;
         }
     }
 
@@ -213,6 +179,29 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
     }
 
     /**
+     * returns the space between bars in percent of the whole width of one value
+     *
+     * @return
+     */
+    public float getBarSpacePercent() {
+        return mBarSpace * 100f;
+    }
+
+    @Override
+    public float getBarSpace() {
+        return mBarSpace;
+    }
+
+    /**
+     * sets the space between the bars in percent (0-100) of the total bar width
+     *
+     * @param percent
+     */
+    public void setBarSpacePercent(float percent) {
+        mBarSpace = percent / 100f;
+    }
+
+    /**
      * Sets the color used for drawing the bar-shadows. The bar shadows is a
      * surface behind the bar that indicates the maximum value. Don't for get to
      * use getResources().getColor(...) to set this. Or Color.rgb(...).
@@ -226,46 +215,6 @@ public class BarDataSet extends BarLineScatterCandleBubbleDataSet<BarEntry> impl
     @Override
     public int getBarShadowColor() {
         return mBarShadowColor;
-    }
-
-    /**
-     * Sets the width used for drawing borders around the bars.
-     * If borderWidth == 0, no border will be drawn.
-     *
-     * @return
-     */
-    public void setBarBorderWidth(float width) {
-        mBarBorderWidth = width;
-    }
-
-    /**
-     * Returns the width used for drawing borders around the bars.
-     * If borderWidth == 0, no border will be drawn.
-     *
-     * @return
-     */
-    @Override
-    public float getBarBorderWidth() {
-        return mBarBorderWidth;
-    }
-
-    /**
-     * Sets the color drawing borders around the bars.
-     *
-     * @return
-     */
-    public void setBarBorderColor(int color) {
-        mBarBorderColor = color;
-    }
-
-    /**
-     * Returns the color drawing borders around the bars.
-     *
-     * @return
-     */
-    @Override
-    public int getBarBorderColor() {
-        return mBarBorderColor;
     }
 
     /**

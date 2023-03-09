@@ -5,11 +5,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Path;
-import android.graphics.RectF;
 
 import com.arnold.sleepminder.lib.charting.components.LimitLine;
 import com.arnold.sleepminder.lib.charting.components.YAxis;
-import com.arnold.sleepminder.lib.charting.utils.MPPointD;
+import com.arnold.sleepminder.lib.charting.utils.PointD;
 import com.arnold.sleepminder.lib.charting.utils.Transformer;
 import com.arnold.sleepminder.lib.charting.utils.Utils;
 import com.arnold.sleepminder.lib.charting.utils.ViewPortHandler;
@@ -23,19 +22,148 @@ public class YAxisRenderer extends AxisRenderer {
     protected Paint mZeroLinePaint;
 
     public YAxisRenderer(ViewPortHandler viewPortHandler, YAxis yAxis, Transformer trans) {
-        super(viewPortHandler, trans, yAxis);
+        super(viewPortHandler, trans);
 
         this.mYAxis = yAxis;
 
-        if(mViewPortHandler != null) {
+        mAxisLabelPaint.setColor(Color.BLACK);
+        mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(10f));
 
-            mAxisLabelPaint.setColor(Color.BLACK);
-            mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(10f));
+        mZeroLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mZeroLinePaint.setColor(Color.GRAY);
+        mZeroLinePaint.setStrokeWidth(1f);
+        mZeroLinePaint.setStyle(Paint.Style.STROKE);
+    }
 
-            mZeroLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            mZeroLinePaint.setColor(Color.GRAY);
-            mZeroLinePaint.setStrokeWidth(1f);
-            mZeroLinePaint.setStyle(Paint.Style.STROKE);
+    /**
+     * Computes the axis values.
+     *
+     * @param yMin - the minimum y-value in the data object for this axis
+     * @param yMax - the maximum y-value in the data object for this axis
+     */
+    public void computeAxis(float yMin, float yMax) {
+
+        // calculate the starting and entry point of the y-labels (depending on
+        // zoom / contentrect bounds)
+        if (mViewPortHandler.contentWidth() > 10 && !mViewPortHandler.isFullyZoomedOutY()) {
+
+            PointD p1 = mTrans.getValuesByTouchPoint(mViewPortHandler.contentLeft(), mViewPortHandler.contentTop());
+            PointD p2 = mTrans.getValuesByTouchPoint(mViewPortHandler.contentLeft(), mViewPortHandler.contentBottom());
+
+            if (!mYAxis.isInverted()) {
+                yMin = (float) p2.y;
+                yMax = (float) p1.y;
+            } else {
+
+                yMin = (float) p1.y;
+                yMax = (float) p2.y;
+            }
+        }
+
+        computeAxisValues(yMin, yMax);
+    }
+
+    /**
+     * Sets up the y-axis labels. Computes the desired number of labels between the two given extremes. Unlike the
+     * papareXLabels() method, this method needs to be called upon every refresh of the view.
+     *
+     * @return
+     */
+    protected void computeAxisValues(float min, float max) {
+
+        float yMin = min;
+        float yMax = max;
+
+        int labelCount = mYAxis.getLabelCount();
+        double range = Math.abs(yMax - yMin);
+
+        if (labelCount == 0 || range <= 0) {
+            mYAxis.mEntries = new float[]{};
+            mYAxis.mEntryCount = 0;
+            return;
+        }
+
+        // Find out how much spacing (in y value space) between axis values
+        double rawInterval = range / labelCount;
+        double interval = Utils.roundToNextSignificant(rawInterval);
+
+        // If granularity is enabled, then do not allow the interval to go below specified granularity.
+        // This is used to avoid repeated values when rounding values for display.
+        if (mYAxis.isGranularityEnabled())
+            interval = interval < mYAxis.getGranularity() ? mYAxis.getGranularity() : interval;
+
+        // Normalize interval
+        double intervalMagnitude = Utils.roundToNextSignificant(Math.pow(10, (int) Math.log10(interval)));
+        int intervalSigDigit = (int) (interval / intervalMagnitude);
+        if (intervalSigDigit > 5) {
+            // Use one order of magnitude higher, to avoid intervals like 0.9 or
+            // 90
+            interval = Math.floor(10 * intervalMagnitude);
+        }
+
+        // force label count
+        if (mYAxis.isForceLabelsEnabled()) {
+
+            float step = (float) range / (float) (labelCount - 1);
+            mYAxis.mEntryCount = labelCount;
+
+            if (mYAxis.mEntries.length < labelCount) {
+                // Ensure stops contains at least numStops elements.
+                mYAxis.mEntries = new float[labelCount];
+            }
+
+            float v = min;
+
+            for (int i = 0; i < labelCount; i++) {
+                mYAxis.mEntries[i] = v;
+                v += step;
+            }
+
+            // no forced count
+        } else {
+
+            // if the labels should only show min and max
+            if (mYAxis.isShowOnlyMinMaxEnabled()) {
+
+                mYAxis.mEntryCount = 2;
+                mYAxis.mEntries = new float[2];
+                mYAxis.mEntries[0] = yMin;
+                mYAxis.mEntries[1] = yMax;
+
+            } else {
+
+                double first = Math.ceil(yMin / interval) * interval;
+                double last = Utils.nextUp(Math.floor(yMax / interval) * interval);
+
+                double f;
+                int i;
+                int n = 0;
+                for (f = first; f <= last; f += interval) {
+                    ++n;
+                }
+
+                mYAxis.mEntryCount = n;
+
+                if (mYAxis.mEntries.length < n) {
+                    // Ensure stops contains at least numStops elements.
+                    mYAxis.mEntries = new float[n];
+                }
+
+                for (f = first, i = 0; i < n; f += interval, ++i) {
+
+                    if (f == 0.0) // Fix for negative zero case (Where value == -0.0, and 0.0 == -0.0)
+                        f = 0.0;
+
+                    mYAxis.mEntries[i] = (float) f;
+                }
+            }
+        }
+
+        // set decimals
+        if (interval < 1) {
+            mYAxis.mDecimals = (int) Math.ceil(-Math.log10(interval));
+        } else {
+            mYAxis.mDecimals = 0;
         }
     }
 
@@ -48,7 +176,16 @@ public class YAxisRenderer extends AxisRenderer {
         if (!mYAxis.isEnabled() || !mYAxis.isDrawLabelsEnabled())
             return;
 
-        float[] positions = getTransformedPositions();
+        float[] positions = new float[mYAxis.mEntryCount * 2];
+
+        for (int i = 0; i < positions.length; i += 2) {
+            // only fill y values, x values are not needed since the y-labels
+            // are
+            // static on the x-axis
+            positions[i + 1] = mYAxis.mEntries[i / 2];
+        }
+
+        mTrans.pointValuesToPixel(positions);
 
         mAxisLabelPaint.setTypeface(mYAxis.getTypeface());
         mAxisLabelPaint.setTextSize(mYAxis.getTextSize());
@@ -112,143 +249,84 @@ public class YAxisRenderer extends AxisRenderer {
      */
     protected void drawYLabels(Canvas c, float fixedPosition, float[] positions, float offset) {
 
-        final int from = mYAxis.isDrawBottomYLabelEntryEnabled() ? 0 : 1;
-        final int to = mYAxis.isDrawTopYLabelEntryEnabled()
-                ? mYAxis.mEntryCount
-                : (mYAxis.mEntryCount - 1);
-
-        float xOffset = mYAxis.getLabelXOffset();
-
         // draw
-        for (int i = from; i < to; i++) {
+        for (int i = 0; i < mYAxis.mEntryCount; i++) {
 
             String text = mYAxis.getFormattedLabel(i);
 
-            c.drawText(text,
-                    fixedPosition + xOffset,
-                    positions[i * 2 + 1] + offset,
-                    mAxisLabelPaint);
+            if (!mYAxis.isDrawTopYLabelEntryEnabled() && i >= mYAxis.mEntryCount - 1)
+                return;
+
+            c.drawText(text, fixedPosition, positions[i * 2 + 1] + offset, mAxisLabelPaint);
         }
     }
 
-    protected Path mRenderGridLinesPath = new Path();
     @Override
     public void renderGridLines(Canvas c) {
 
         if (!mYAxis.isEnabled())
             return;
 
+        // pre alloc
+        float[] position = new float[2];
+
         if (mYAxis.isDrawGridLinesEnabled()) {
-
-            int clipRestoreCount = c.save();
-            c.clipRect(getGridClippingRect());
-
-            float[] positions = getTransformedPositions();
 
             mGridPaint.setColor(mYAxis.getGridColor());
             mGridPaint.setStrokeWidth(mYAxis.getGridLineWidth());
             mGridPaint.setPathEffect(mYAxis.getGridDashPathEffect());
 
-            Path gridLinePath = mRenderGridLinesPath;
-            gridLinePath.reset();
+            Path gridLinePath = new Path();
 
-            // draw the grid
-            for (int i = 0; i < positions.length; i += 2) {
+            // draw the horizontal grid
+            for (int i = 0; i < mYAxis.mEntryCount; i++) {
+
+                position[1] = mYAxis.mEntries[i];
+                mTrans.pointValuesToPixel(position);
+
+                gridLinePath.moveTo(mViewPortHandler.offsetLeft(), position[1]);
+                gridLinePath.lineTo(mViewPortHandler.contentRight(), position[1]);
 
                 // draw a path because lines don't support dashing on lower android versions
-                c.drawPath(linePath(gridLinePath, i, positions), mGridPaint);
+                c.drawPath(gridLinePath, mGridPaint);
+
                 gridLinePath.reset();
             }
-
-            c.restoreToCount(clipRestoreCount);
         }
 
         if (mYAxis.isDrawZeroLineEnabled()) {
-            drawZeroLine(c);
+
+            // draw zero line
+            position[1] = 0f;
+            mTrans.pointValuesToPixel(position);
+
+            drawZeroLine(c, mViewPortHandler.offsetLeft(), mViewPortHandler.contentRight(), position[1] - 1, position[1] - 1);
         }
     }
 
-    protected RectF mGridClippingRect = new RectF();
-
-    public RectF getGridClippingRect() {
-        mGridClippingRect.set(mViewPortHandler.getContentRect());
-        mGridClippingRect.inset(0.f, -mAxis.getGridLineWidth());
-        return mGridClippingRect;
-    }
-
     /**
-     * Calculates the path for a grid line.
+     * Draws the zero line at the specified position.
      *
-     * @param p
-     * @param i
-     * @param positions
-     * @return
+     * @param c
+     * @param x1
+     * @param x2
+     * @param y1
+     * @param y2
      */
-    protected Path linePath(Path p, int i, float[] positions) {
-
-        p.moveTo(mViewPortHandler.offsetLeft(), positions[i + 1]);
-        p.lineTo(mViewPortHandler.contentRight(), positions[i + 1]);
-
-        return p;
-    }
-
-    protected float[] mGetTransformedPositionsBuffer = new float[2];
-    /**
-     * Transforms the values contained in the axis entries to screen pixels and returns them in form of a float array
-     * of x- and y-coordinates.
-     *
-     * @return
-     */
-    protected float[] getTransformedPositions() {
-
-        if(mGetTransformedPositionsBuffer.length != mYAxis.mEntryCount * 2){
-            mGetTransformedPositionsBuffer = new float[mYAxis.mEntryCount * 2];
-        }
-        float[] positions = mGetTransformedPositionsBuffer;
-
-        for (int i = 0; i < positions.length; i += 2) {
-            // only fill y values, x values are not needed for y-labels
-            positions[i + 1] = mYAxis.mEntries[i / 2];
-        }
-
-        mTrans.pointValuesToPixel(positions);
-        return positions;
-    }
-
-    protected Path mDrawZeroLinePath = new Path();
-    protected RectF mZeroLineClippingRect = new RectF();
-
-    /**
-     * Draws the zero line.
-     */
-    protected void drawZeroLine(Canvas c) {
-
-        int clipRestoreCount = c.save();
-        mZeroLineClippingRect.set(mViewPortHandler.getContentRect());
-        mZeroLineClippingRect.inset(0.f, -mYAxis.getZeroLineWidth());
-        c.clipRect(mZeroLineClippingRect);
-
-        // draw zero line
-        MPPointD pos = mTrans.getPixelForValues(0f, 0f);
+    protected void drawZeroLine(Canvas c, float x1, float x2, float y1, float y2) {
 
         mZeroLinePaint.setColor(mYAxis.getZeroLineColor());
         mZeroLinePaint.setStrokeWidth(mYAxis.getZeroLineWidth());
 
-        Path zeroLinePath = mDrawZeroLinePath;
-        zeroLinePath.reset();
+        Path zeroLinePath = new Path();
 
-        zeroLinePath.moveTo(mViewPortHandler.contentLeft(), (float) pos.y);
-        zeroLinePath.lineTo(mViewPortHandler.contentRight(), (float) pos.y);
+        zeroLinePath.moveTo(x1, y1);
+        zeroLinePath.lineTo(x2, y2);
 
         // draw a path because lines don't support dashing on lower android versions
         c.drawPath(zeroLinePath, mZeroLinePaint);
-
-        c.restoreToCount(clipRestoreCount);
     }
 
-    protected Path mRenderLimitLines = new Path();
-    protected float[] mRenderLimitLinesBuffer = new float[2];
-    protected RectF mLimitLineClippingRect = new RectF();
     /**
      * Draws the LimitLines associated with this axis to the screen.
      *
@@ -262,11 +340,8 @@ public class YAxisRenderer extends AxisRenderer {
         if (limitLines == null || limitLines.size() <= 0)
             return;
 
-        float[] pts = mRenderLimitLinesBuffer;
-        pts[0] = 0;
-        pts[1] = 0;
-        Path limitLinePath = mRenderLimitLines;
-        limitLinePath.reset();
+        float[] pts = new float[2];
+        Path limitLinePath = new Path();
 
         for (int i = 0; i < limitLines.size(); i++) {
 
@@ -274,11 +349,6 @@ public class YAxisRenderer extends AxisRenderer {
 
             if (!l.isEnabled())
                 continue;
-
-            int clipRestoreCount = c.save();
-            mLimitLineClippingRect.set(mViewPortHandler.getContentRect());
-            mLimitLineClippingRect.inset(0.f, -l.getLineWidth());
-            c.clipRect(mLimitLineClippingRect);
 
             mLimitLinePaint.setStyle(Paint.Style.STROKE);
             mLimitLinePaint.setColor(l.getLineColor());
@@ -343,8 +413,6 @@ public class YAxisRenderer extends AxisRenderer {
                             pts[1] + yOffset, mLimitLinePaint);
                 }
             }
-
-            c.restoreToCount(clipRestoreCount);
         }
     }
 }
