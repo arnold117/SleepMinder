@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,11 +32,14 @@ import java.util.concurrent.Callable;
 public class MainActivity extends AppCompatActivity {
 
     private NightListAdapter nightListAdapter;
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // new MyApplication().init();
 
         if (!isExternalStorageWritable()) {
             new AlertDialog.Builder(this)
@@ -52,9 +56,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Initialize start/stop button
-        synchronizeStartButtonState(MyApplication.recorder.isRunning());
+        try {
+            synchronizeStartButtonState(MyApplication.recorder.isRunning());
+        }
+        catch (NullPointerException exception) {
+            Log.e(TAG, "NullPointerException");
+            if (MyApplication.recorder == null) {
+                Log.w(TAG, "MyApplication.recorder == null");
+            }
+        }
 
-        setupNightList();
+        // setupNightList();
 
         findViewById(R.id.toggle_recording).setOnClickListener(new View.OnClickListener() {
             @Override

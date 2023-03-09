@@ -8,6 +8,11 @@ public class MyApplication extends android.app.Application{
     public static Context context;
     public static Recorder recorder;
 
+    public void init() {
+        // context = getApplicationContext();
+        recorder = new Recorder();
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
