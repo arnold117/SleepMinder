@@ -1,5 +1,6 @@
 package com.arnold.sleepminder;
 
+import android.app.Application;
 import android.content.Context;
 
 import com.arnold.sleepminder.lib.Recorder;
@@ -7,11 +8,6 @@ import com.arnold.sleepminder.lib.Recorder;
 public class MyApplication extends android.app.Application{
     public static Context context;
     public static Recorder recorder;
-
-    public void init() {
-        // context = getApplicationContext();
-        recorder = new Recorder();
-    }
 
     @Override
     public void onCreate() {

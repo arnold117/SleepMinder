@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // new MyApplication().init();
 
         if (!isExternalStorageWritable()) {
             new AlertDialog.Builder(this)
@@ -66,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // setupNightList();
+        setupNightList();
 
         findViewById(R.id.toggle_recording).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,8 +115,17 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<File> nights = new ArrayList<>(Arrays.asList(FileHandler.listFiles()));
         nightListAdapter = new NightListAdapter(this, android.R.layout.simple_list_item_1, nights);
 
-        final ListView listView = (ListView) findViewById(R.id.nightsList);
-        listView.setAdapter(nightListAdapter);
+        final ListView listView = findViewById(R.id.nightsList);
+        try {
+            listView.setAdapter(nightListAdapter);
+            Log.i(TAG, "listView isn't a NullPointer");
+        }
+        catch (NullPointerException exception) {
+            Log.e(TAG, "NullPointerException");
+            if (listView == null) {
+                Log.e(TAG, "listView is NullPointer");
+            }
+        }
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
