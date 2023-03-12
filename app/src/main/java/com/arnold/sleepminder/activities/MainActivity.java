@@ -33,12 +33,14 @@ public class MainActivity extends AppCompatActivity {
 
     private NightListAdapter nightListAdapter;
     private static final String TAG = "MainActivity";
+    private Hooks hooks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        hooks = new Hooks();
 
         if (!isExternalStorageWritable()) {
             new AlertDialog.Builder(this)
