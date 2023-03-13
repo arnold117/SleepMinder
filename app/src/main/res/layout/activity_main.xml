@@ -1,11 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.MainActivity">
+    tools:context=".MainActivity">
+
 
     <RelativeLayout
         android:id="@+id/header"
@@ -23,37 +24,36 @@
             android:textColor="@android:color/white"
             android:textSize="40sp"
             android:layout_centerHorizontal="true" />
-
         <Button
             android:id="@+id/start_test"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/test"
+            android:text="Test"
             android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true" />
 
+
     </RelativeLayout>
-
     <ListView
-        android:id="@+id/nightsList"
+        android:layout_alignLeft="@+id/header"
+        android:layout_alignStart="@+id/header"
+        android:layout_below="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:id="@+id/nights_list"
+        android:layout_alignParentStart="false"></ListView>
 
-    </ListView>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/toggle_recording"
+    <android.support.design.widget.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:id="@+id/toggleRecording"
         android:layout_marginTop="90dp"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentTop="true"
-        android:clickable="true"
-        android:focusable="true"
-        app:srcCompat="@mipmap/ic_action_play"
+        android:src="@drawable/ic_action_play"
         app:elevation="15dp"
-        android:backgroundTint="#EDC55B"
+        app:backgroundTint="#EDC55B"
         app:borderWidth="0dp"
-        />
-
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"/>
 </RelativeLayout>

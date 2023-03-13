@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <files-path
-        name="myrecordings"
-        path="/" />
+<paths>
+    <files-path path="/" name="myrecordings" />
 </paths>
