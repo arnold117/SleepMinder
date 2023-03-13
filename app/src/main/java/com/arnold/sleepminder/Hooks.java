@@ -26,7 +26,7 @@ public class Hooks {
         hooks = new HashMap<Integer, ArrayList<Callable<Integer>>>();
     }
 
-    public static void  remove (int hook) {
+    public static void remove (int hook) {
         hooks.remove(hook);
     }
 

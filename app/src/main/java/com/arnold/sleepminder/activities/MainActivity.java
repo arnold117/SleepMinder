@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,11 +32,15 @@ import java.util.concurrent.Callable;
 public class MainActivity extends AppCompatActivity {
 
     private NightListAdapter nightListAdapter;
+    private static final String TAG = "MainActivity";
+    private Hooks hooks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        hooks = new Hooks();
 
         if (!isExternalStorageWritable()) {
             new AlertDialog.Builder(this)
@@ -52,7 +57,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Initialize start/stop button
-        synchronizeStartButtonState(MyApplication.recorder.isRunning());
+        try {
+            synchronizeStartButtonState(MyApplication.recorder.isRunning());
+        }
+        catch (NullPointerException exception) {
+            Log.e(TAG, "NullPointerException");
+            if (MyApplication.recorder == null) {
+                Log.w(TAG, "MyApplication.recorder == null");
+            }
+        }
 
         setupNightList();
 
@@ -104,8 +117,17 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<File> nights = new ArrayList<>(Arrays.asList(FileHandler.listFiles()));
         nightListAdapter = new NightListAdapter(this, android.R.layout.simple_list_item_1, nights);
 
-        final ListView listView = (ListView) findViewById(R.id.nightsList);
-        listView.setAdapter(nightListAdapter);
+        final ListView listView = findViewById(R.id.nightsList);
+        try {
+            listView.setAdapter(nightListAdapter);
+            Log.i(TAG, "listView isn't a NullPointer");
+        }
+        catch (NullPointerException exception) {
+            Log.e(TAG, "NullPointerException");
+            if (listView == null) {
+                Log.e(TAG, "listView is NullPointer");
+            }
+        }
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

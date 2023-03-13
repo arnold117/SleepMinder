@@ -35,12 +35,11 @@
     </RelativeLayout>
 
     <ListView
-        android:id="@+id/nights_list"
-        android:layout_alignStart="@+id/header"
-        android:layout_below="@+id/header"
+        android:id="@+id/nightsList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"></ListView>
+        android:layout_height="match_parent">
+
+    </ListView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/toggle_recording"

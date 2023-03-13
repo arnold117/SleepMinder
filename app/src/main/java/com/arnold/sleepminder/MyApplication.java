@@ -1,5 +1,6 @@
 package com.arnold.sleepminder;
 
+import android.app.Application;
 import android.content.Context;
 
 import com.arnold.sleepminder.lib.Recorder;
